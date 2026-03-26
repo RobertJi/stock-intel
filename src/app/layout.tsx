@@ -1,17 +1,24 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { DM_Sans, DM_Serif_Display, IBM_Plex_Mono } from "next/font/google";
 
 import { Sidebar } from "@/components/Sidebar";
 
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const dmSerif = DM_Serif_Display({
+  variable: "--font-dm-serif",
   subsets: ["latin"],
+  weight: "400",
 });
 
-const jetBrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-ibm-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
 });
 
@@ -26,16 +33,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
-        className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} antialiased`}
+        className={`${dmSerif.variable} ${ibmPlexMono.variable} ${dmSans.variable}`}
       >
-        <div className="min-h-screen bg-[#080b14] text-[#e8eaf0]">
-          <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(0,229,255,0.16),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(0,229,255,0.08),_transparent_22%)]" />
-          <div className="relative flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 px-4 py-6 sm:px-6 lg:px-10">{children}</main>
-          </div>
+        <div className="flex min-h-screen bg-background">
+          <Sidebar />
+          <main className="min-w-0 flex-1 px-6 py-6 lg:px-12 lg:py-10">
+            {children}
+          </main>
         </div>
       </body>
     </html>

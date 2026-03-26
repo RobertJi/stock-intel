@@ -1,90 +1,96 @@
 import Link from "next/link";
-import { ArrowRight, TrendingDown, TrendingUp, ExternalLink } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { fetchStocks, fetchEvents } from "@/lib/server-data";
+import { TrendingDown, TrendingUp } from "lucide-react";
+
+import { fetchEvents, fetchStocks } from "@/lib/server-data";
+import { EventsFeed } from "@/components/EventsFeed";
 
 export const revalidate = 60;
 
 export default async function Home() {
   const [stocks, events] = await Promise.all([fetchStocks(), fetchEvents()]);
 
-  return (
-    <div className="space-y-8">
-      {/* Watchlist */}
-      <section className="space-y-4">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-cyan-400/80">Market Pulse</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#e8eaf0]">Watchlist</h1>
-        </div>
-        <div className="grid gap-4 xl:grid-cols-4 md:grid-cols-2">
-          {stocks.filter(s => !s.error).map((stock) => {
-            const isPos = stock.changePct >= 0;
-            return (
-              <Link key={stock.ticker} href={`/stock/${stock.ticker}`}>
-                <Card className="h-full rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-sm transition duration-200 hover:border-cyan-400/30 hover:bg-cyan-400/[0.06]">
-                  <CardHeader className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <CardTitle className="text-xl tracking-tight text-[#e8eaf0]">{stock.ticker}</CardTitle>
-                      </div>
-                      {isPos ? <TrendingUp className="size-5 text-emerald-400" /> : <TrendingDown className="size-5 text-rose-400" />}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-3xl font-semibold text-[#e8eaf0]">${stock.price.toFixed(2)}</p>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className={isPos ? "text-emerald-400" : "text-rose-400"}>
-                        {isPos ? "+" : ""}{stock.changePct.toFixed(2)}%
-                      </span>
-                      <span className="text-slate-500">
-                        {isPos ? "+" : ""}{stock.changeAmt.toFixed(2)}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+  // Price freshness: use updatedAt from first stock
+  const updatedAt = stocks[0]?.updatedAt
+    ? new Date(stocks[0].updatedAt * 1000).toLocaleTimeString("zh-CN", {
+        hour: "2-digit", minute: "2-digit", timeZone: "America/New_York"
+      }) + " ET"
+    : null;
 
-      {/* Events Feed */}
-      <section className="space-y-4">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-cyan-400/80">Signal Stream</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#e8eaf0]">SEC Events Feed</h2>
-          <p className="mt-1 text-sm text-slate-500">Real-time 8-K filings from SEC EDGAR</p>
+  return (
+    <div className="max-w-6xl">
+      <div className="mb-8 border-b border-[#D4CCB8] pb-4">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.3em] text-[#B5882B]">
+              Market Overview
+            </p>
+            <h1 className="font-display text-4xl text-[#1A1A2E] sm:text-5xl">
+              Watchlist
+            </h1>
+          </div>
+          {updatedAt && (
+            <p className="font-mono text-[10px] text-[#5C5C6E] pb-1">
+              Updated {updatedAt}
+            </p>
+          )}
         </div>
-        <div className="space-y-3">
-          {events.filter(e => !e.error).map((event, i) => (
-            <Card key={i} className="rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-sm">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-4">
-                  <div className="mt-1.5 size-2.5 shrink-0 rounded-full bg-slate-400" />
-                  <div className="flex-1 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge className="border-cyan-400/30 bg-cyan-400/10 text-cyan-300 font-mono text-[10px]">
-                        8-K
-                      </Badge>
-                      <span className="font-mono text-xs uppercase tracking-[0.2em] text-slate-500">{event.ticker}</span>
-                      <span className="font-mono text-xs text-slate-600">{event.date}</span>
-                    </div>
-                    <p className="text-sm text-[#e8eaf0]">{event.title}</p>
-                  </div>
-                  {event.link && (
-                    <a href={event.link} target="_blank" rel="noopener noreferrer"
-                      className="shrink-0 text-slate-500 transition hover:text-cyan-400">
-                      <ExternalLink className="size-4" />
-                    </a>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      </div>
+
+      <div className="mb-10 grid gap-y-0 sm:grid-cols-2 lg:grid-cols-4">
+        {stocks.map((stock, index) => {
+          const isPos = stock.changePct >= 0;
+          const isLastRowOnTablet = index >= stocks.length - (stocks.length % 2 || 2);
+          const borderClass =
+            index < stocks.length - 1 ? "lg:border-r lg:border-[#D4CCB8]" : "";
+          const rowBorderClass = isLastRowOnTablet ? "sm:border-b-0" : "";
+
+          return (
+            <Link
+              key={stock.ticker}
+              href={`/stock/${stock.ticker}`}
+              className={`group border-b border-[#D4CCB8] px-5 py-5 transition-colors hover:bg-[#EDE8DE] sm:px-6 lg:border-b-0 ${borderClass} ${rowBorderClass}`}
+            >
+              <div className="mb-3 flex items-start justify-between">
+                <span className="font-mono text-xs uppercase tracking-[0.15em] text-[#5C5C6E]">
+                  {stock.ticker}
+                </span>
+                {isPos ? (
+                  <TrendingUp className="size-3.5 text-[#1B4332]" />
+                ) : (
+                  <TrendingDown className="size-3.5 text-[#7C1D1D]" />
+                )}
+              </div>
+              <p className="mb-1 break-words font-display text-[2rem] leading-none text-[#1A1A2E] sm:text-4xl">
+                ${stock.price.toFixed(2)}
+              </p>
+              <p
+                className={`font-mono text-xs ${
+                  isPos ? "text-[#1B4332]" : "text-[#7C1D1D]"
+                }`}
+              >
+                {isPos ? "+" : ""}
+                {stock.changePct.toFixed(2)}%
+                <span className="ml-2 text-[#9A9AAA]">
+                  {isPos ? "+" : ""}
+                  {stock.changeAmt.toFixed(2)}
+                </span>
+              </p>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-[#D4CCB8]">
+        <div className="py-6 border-b border-[#D4CCB8]">
+          <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.3em] text-[#B5882B]">
+            Signal Stream
+          </p>
+          <h2 className="font-display text-2xl text-[#1A1A2E] sm:text-3xl">
+            SEC Filings
+          </h2>
         </div>
-      </section>
+        <EventsFeed events={events} />
+      </div>
     </div>
   );
 }

@@ -1,43 +1,43 @@
-import { execSync } from "child_process";
+import { execFileSync, spawn } from "child_process";
 import path from "path";
+import { areAllStocksFresh, getEvents, getStocks, isSyncFresh } from "@/lib/db";
 
-export interface StockData {
-  ticker: string;
-  price: number;
-  changeAmt: number;
-  changePct: number;
-  prevClose: number;
-  history: { date: string; close: number }[];
-  error?: string;
+export type {} // keep file as a module
+
+const WATCHLIST = ["META", "NFLX", "NVDA", "OXY"];
+const SCRIPT = path.join(process.cwd(), "scripts", "sync_db.py");
+
+function triggerSync(mode: "prices" | "events" | "all" = "all") {
+  const child = spawn("python3", [SCRIPT, mode], {
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
 }
 
-export interface EventData {
-  ticker: string;
-  type: string;
-  title: string;
-  date: string;
-  link: string;
-  impact: "BULLISH" | "BEARISH" | "NEUTRAL";
-  description: string;
-  error?: string;
-}
-
-const SCRIPTS = path.join(process.cwd(), "scripts");
-
-export async function fetchStocks(): Promise<StockData[]> {
-  try {
-    const out = execSync(`python3 ${SCRIPTS}/get_prices.py`, { timeout: 20000 }).toString();
-    return JSON.parse(out);
-  } catch {
-    return [];
+export async function fetchStocks() {
+  if (areAllStocksFresh(WATCHLIST, 60)) {
+    return getStocks();
   }
+
+  try {
+    execFileSync("python3", [SCRIPT, "prices"], { timeout: 25000, stdio: "ignore" });
+  } catch (error) {
+    console.error("Price sync failed:", error);
+  }
+
+  return getStocks();
 }
 
-export async function fetchEvents(): Promise<EventData[]> {
-  try {
-    const out = execSync(`python3 ${SCRIPTS}/get_events.py`, { timeout: 30000 }).toString();
-    return JSON.parse(out);
-  } catch {
-    return [];
+export async function fetchEvents(ticker?: string) {
+  const events = getEvents(ticker, 50);
+
+  if (!isSyncFresh("events", 600)) {
+    triggerSync("events");
   }
+
+  return events;
 }
+
+export type StockData = ReturnType<typeof getStocks>[number];
+export type EventData = ReturnType<typeof getEvents>[number];
