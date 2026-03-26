@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Egret for dark background (light strokes) -->
+  <ellipse cx="16" cy="20" rx="4.5" ry="6" fill="rgba(255,255,255,0.12)" stroke="#E8E3D8" stroke-width="1.2"/>
+  <path d="M16 14 C15 12, 14 9, 15.5 7" stroke="#E8E3D8" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+  <circle cx="15.8" cy="6" r="2.2" fill="rgba(255,255,255,0.12)" stroke="#E8E3D8" stroke-width="1.2"/>
+  <path d="M14 5.5 L10.5 5" stroke="#B5882B" stroke-width="1.1" stroke-linecap="round"/>
+  <circle cx="14.8" cy="5.5" r="0.5" fill="#E8E3D8"/>
+  <path d="M16.5 4.5 C18 2, 19.5 1.5, 20 2" stroke="#E8E3D8" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+  <path d="M14 26 L13.5 30" stroke="#E8E3D8" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M18 26 L18.5 30" stroke="#E8E3D8" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M13.5 30 L11 30.5 M13.5 30 L13 31.5" stroke="#E8E3D8" stroke-width="0.9" stroke-linecap="round"/>
+  <path d="M18.5 30 L21 30.5 M18.5 30 L19 31.5" stroke="#E8E3D8" stroke-width="0.9" stroke-linecap="round"/>
+  <path d="M20 22 C23 23, 25 22, 24 25" stroke="#E8E3D8" stroke-width="0.9" stroke-linecap="round" fill="none"/>
+  <path d="M20 23 C24 25, 26 24, 25.5 27" stroke="#E8E3D8" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+  <path d="M12 18 C10 17, 9 19, 11 21" stroke="#E8E3D8" stroke-width="0.9" stroke-linecap="round" fill="none"/>
+</svg>

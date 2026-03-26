@@ -25,6 +25,9 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Stock Intel",
   description: "Personal US stock intelligence dashboard",
+  icons: {
+    icon: "/egret-light.svg",
+  },
 };
 
 export default function RootLayout({

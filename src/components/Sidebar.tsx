@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const nav = [
@@ -10,6 +11,9 @@ export function Sidebar() {
   return (
     <aside className="hidden min-h-screen w-52 shrink-0 flex-col bg-[#1A1A2E] px-6 pb-8 pt-10 lg:flex xl:pt-12">
       <div className="mb-10">
+        <div className="mb-3 flex items-center gap-2.5">
+          <Image src="/egret-dark.svg" alt="egret" width={28} height={28} />
+        </div>
         <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.3em] text-[#5C6B8A]">
           Personal
         </p>
