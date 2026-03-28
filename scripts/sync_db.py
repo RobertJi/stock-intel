@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 def translate_to_chinese(text: str) -> str:
