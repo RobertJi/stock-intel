@@ -9,19 +9,19 @@ import time
 from pathlib import Path
 
 
-Z_AI_API_KEY = "cdfb2e683e314052ba0333326c45abee.7hw37LTkZoWf030b"
-Z_AI_BASE_URL = "https://api.z.ai/api/paas/v4"
+OPENROUTER_API_KEY = "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"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 def translate_to_chinese(text: str) -> str:
-    """Use z.ai GLM-5-Turbo to translate SEC filings to Chinese."""
+    """Use OpenRouter to translate SEC filings to Chinese."""
     if not text or len(text.strip()) < 10:
         return text
     try:
         import requests as _req
         resp = _req.post(
-            f"{Z_AI_BASE_URL}/chat/completions",
+            f"{OPENROUTER_BASE_URL}/chat/completions",
             json={
-                "model": "GLM-5-Turbo",
+                "model": "openai/gpt-4o-mini",
                 "max_tokens": 300,
                 "messages": [{
                     "role": "user",
@@ -29,7 +29,7 @@ def translate_to_chinese(text: str) -> str:
                 }]
             },
             headers={
-                "Authorization": f"Bearer {Z_AI_API_KEY}",
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
                 "Content-Type": "application/json",
             },
             timeout=30
