@@ -60,7 +60,7 @@ export default async function Home() {
                   <TrendingDown className="size-3.5 text-[#7C1D1D]" />
                 )}
               </div>
-              <p className="mb-1 break-words font-display text-[2rem] leading-none text-[#1A1A2E] sm:text-4xl">
+              <p className="mb-1 font-display text-[2rem] leading-none text-[#1A1A2E] sm:text-4xl tabular-nums">
                 ${stock.price.toFixed(2)}
               </p>
               <p

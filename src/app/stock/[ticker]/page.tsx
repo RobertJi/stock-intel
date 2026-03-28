@@ -56,7 +56,7 @@ export default async function StockDetailPage({ params }: Props) {
           {ticker.toUpperCase()}
         </p>
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-6">
-          <p className="break-words font-display text-4xl leading-none text-[#1A1A2E] sm:text-6xl md:text-7xl">
+          <p className="font-display text-4xl leading-none text-[#1A1A2E] tabular-nums sm:text-6xl md:text-7xl">
             ${stock.price.toFixed(2)}
           </p>
           <div className="max-w-full pb-1 sm:pb-2">
