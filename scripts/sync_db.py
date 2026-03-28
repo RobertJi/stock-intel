@@ -9,19 +9,19 @@ import time
 from pathlib import Path
 
 
-MINIMAX_API_KEY = "sk-api-dWCNRdrMDAckdpmjELg5cfoNrM6LrfDGSqeIk0aXIb09qfPZrsQAF7uO-cTf7py_VvE9fGZOP_2RBboQyVrBQRouvlzbgp79FHXjOMYCxlp55aF6AkCSHdA"
-MINIMAX_BASE_URL = "https://api.minimax.io/anthropic"
+Z_AI_API_KEY = "cdfb2e683e314052ba0333326c45abee.7hw37LTkZoWf030b"
+Z_AI_BASE_URL = "https://api.z.ai/api/paas/v4"
 
 def translate_to_chinese(text: str) -> str:
-    """Use MiniMax API (Anthropic-compatible) to translate to Chinese."""
+    """Use z.ai GLM-5-Turbo to translate SEC filings to Chinese."""
     if not text or len(text.strip()) < 10:
         return text
     try:
         import requests as _req
         resp = _req.post(
-            f"{MINIMAX_BASE_URL}/v1/messages",
+            f"{Z_AI_BASE_URL}/chat/completions",
             json={
-                "model": "MiniMax-M2.5",
+                "model": "GLM-5-Turbo",
                 "max_tokens": 300,
                 "messages": [{
                     "role": "user",
@@ -29,17 +29,17 @@ def translate_to_chinese(text: str) -> str:
                 }]
             },
             headers={
-                "x-api-key": MINIMAX_API_KEY,
-                "anthropic-version": "2023-06-01",
+                "Authorization": f"Bearer {Z_AI_API_KEY}",
+                "Content-Type": "application/json",
             },
             timeout=30
         )
         data = resp.json()
-        for block in data.get("content", []):
-            if block.get("type") == "text":
-                translated = block["text"].strip()
-                if translated:
-                    return translated
+        choices = data.get("choices", [])
+        if choices:
+            translated = choices[0].get("message", {}).get("content", "").strip()
+            if translated:
+                return translated
         return text
     except Exception as e:
         print(f"  translate error: {e}", file=sys.stderr)
