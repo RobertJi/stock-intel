@@ -39,10 +39,17 @@ export default async function Home() {
       <div className="mb-10 grid gap-y-0 sm:grid-cols-2 lg:grid-cols-4">
         {stocks.map((stock, index) => {
           const isPos = stock.changePct >= 0;
-          const isLastRowOnTablet = index >= stocks.length - (stocks.length % 2 || 2);
-          const borderClass =
-            index < stocks.length - 1 ? "lg:border-r lg:border-[#D4CCB8]" : "";
-          const rowBorderClass = isLastRowOnTablet ? "sm:border-b-0" : "";
+          const total = stocks.length;
+          const cols = 4;
+          const smCols = 2;
+          // lg: only add right border if not the last in the row
+          const isLastInLgRow = (index + 1) % cols === 0 || index === total - 1;
+          // sm: hide bottom border for last row items
+          const smRowCount = Math.ceil(total / smCols);
+          const itemSmRow = Math.floor(index / smCols) + 1;
+          const isLastSmRow = itemSmRow === smRowCount;
+          const borderClass = !isLastInLgRow ? "lg:border-r lg:border-[#D4CCB8]" : "";
+          const rowBorderClass = isLastSmRow ? "sm:border-b-0" : "";
 
           return (
             <Link

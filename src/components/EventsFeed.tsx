@@ -77,8 +77,8 @@ export function EventsFeed({ events }: { events: Event[] }) {
     <div>
       {/* Filter tabs + lang toggle */}
       <div className="border-b border-[#D4CCB8] py-4">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-          <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2 min-w-0">
+          <div className="flex min-w-0 flex-1 flex-wrap gap-2 overflow-x-auto">
             {filters.map(f => (
               <button
                 key={f}
@@ -159,7 +159,7 @@ export function EventsFeed({ events }: { events: Event[] }) {
               </div>
               <p className="break-words text-sm leading-snug font-medium text-[#1A1A2E]">{event.title}</p>
               {event.description && (
-                <p className="line-clamp-3 break-words text-xs leading-relaxed text-[#5C5C6E]">
+                <p className="line-clamp-3 text-xs leading-relaxed text-[#5C5C6E]" style={{overflowWrap:'break-word'}}>
                   {lang === "zh" && (event as any).descriptionZh
                     ? (event as any).descriptionZh
                     : event.description}
@@ -182,7 +182,7 @@ export function EventsFeed({ events }: { events: Event[] }) {
                   href={event.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center rounded p-1.5 text-[#D4CCB8] transition-colors hover:bg-[#D4CCB8]/30 hover:text-[#B5882B] sm:opacity-0 sm:group-hover:opacity-100"
+                  className="flex items-center justify-center rounded p-1.5 text-[#B5882B] transition-colors hover:bg-[#D4CCB8]/30"
                   aria-label="Open source"
                 >
                   <ExternalLink className="size-3.5" />
