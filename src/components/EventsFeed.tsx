@@ -40,18 +40,6 @@ interface Event {
   description?: string;
 }
 
-// Placeholder market news items — replace with real data source later
-const MARKET_NEWS_PLACEHOLDER: Event[] = [
-  {
-    ticker: "MARKET",
-    type: "MARKET_NEWS",
-    title: "Market News 功能即将上线",
-    date: new Date().toISOString().slice(0, 10),
-    impact: "NEUTRAL",
-    description: "此标签页将整合市场宏观新闻、财经快讯和重要政策动态，提供全面的信号覆盖。",
-  },
-];
-
 export function EventsFeed({ events }: { events: Event[] }) {
   const [activeFilter, setActiveFilter] = useState("HIDE_INSIDER_SELL");
   const [lang, setLang] = useState<"zh" | "en">("zh");
@@ -65,9 +53,7 @@ export function EventsFeed({ events }: { events: Event[] }) {
     ...typesPresent.filter(t => EVENT_LABELS[t] && t !== "MARKET_NEWS"),
   ];
 
-  const allItems = activeFilter === "MARKET_NEWS"
-    ? MARKET_NEWS_PLACEHOLDER
-    : activeFilter === "ALL"
+  const allItems = activeFilter === "ALL"
     ? events
     : activeFilter === "HIDE_INSIDER_SELL"
     ? events.filter(e => e.type !== "INSIDER_SELL")
@@ -113,7 +99,7 @@ export function EventsFeed({ events }: { events: Event[] }) {
       {/* Events list */}
       <div className="divide-y divide-[#D4CCB8]">
         {allItems.length === 0 && (
-          <p className="py-8 font-sans text-sm text-[#5C5C6E]">No events for this filter.</p>
+          <p className="py-8 font-sans text-sm text-[#5C5C6E]">暂无符合条件的信号</p>
         )}
         {allItems.map((event, i) => (
           <div

@@ -235,6 +235,46 @@ def sync_form4(conn):
     conn.commit()
 
 
+def sync_news(conn):
+    """Fetch market news from Yahoo Finance for watchlist tickers."""
+    import importlib.util, os as _os
+    spec = importlib.util.spec_from_file_location(
+        "get_news", _os.path.join(_os.path.dirname(__file__), "get_news.py")
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    articles = mod.fetch_all_news()
+    new_count = 0
+    for item in articles:
+        try:
+            raw_title = item["title"]
+            # Translate title to Chinese
+            zh_title = translate_to_chinese(raw_title) if raw_title else ""
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO events
+                (ticker, type, title, date, source, link, impact, description, description_zh)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    item["ticker"], "MARKET_NEWS", raw_title, item["date"],
+                    item.get("source", "Yahoo Finance"), item.get("link", ""),
+                    "NEUTRAL", "", zh_title,
+                ),
+            )
+            new_count += conn.execute("SELECT changes()").fetchone()[0]
+        except Exception:
+            pass
+    conn.commit()
+    conn.execute(
+        "INSERT INTO sync_log (type, status, message) VALUES ('news', 'ok', ?)",
+        (f"Inserted {new_count} new news articles",),
+    )
+    conn.commit()
+    print(f"  News sync done: {new_count} new articles")
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "all"
     connection = get_conn()
@@ -247,5 +287,8 @@ if __name__ == "__main__":
     if mode in ("all", "form4"):
         print("Syncing Form 4 insider trades...")
         sync_form4(connection)
+    if mode in ("all", "news"):
+        print("Syncing market news...")
+        sync_news(connection)
     connection.close()
     print("Done.")
