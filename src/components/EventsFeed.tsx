@@ -7,7 +7,7 @@ import { ExternalLink, Languages } from "lucide-react";
 const EVENT_LABELS: Record<string, string> = {
   HIDE_INSIDER_SELL:    "重大事件",
   ALL:                  "全部",
-  MARKET_NEWS:          "Market News",
+  MARKET_NEWS:          "市场新闻",
   INSIDER_BUY:          "🟢 内幕买入",
   INSIDER_SELL:         "🔴 内幕卖出",
   EARNINGS:             "Earnings",
