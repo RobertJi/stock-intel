@@ -88,12 +88,8 @@ export function getStocks() {
 }
 
 export function getEvents(ticker?: string, limit = 50) {
-  const query = ticker
-    ? db.prepare("SELECT * FROM events WHERE ticker = ? ORDER BY date DESC, id DESC LIMIT ?")
-    : db.prepare("SELECT * FROM events ORDER BY date DESC, id DESC LIMIT ?");
-  const rows = (ticker ? query.all(ticker, limit) : query.all(limit)) as EventRow[];
-
-  return rows.map((row) => ({
+  // SEC 事件和市场新闻分开查，各取各的配额，避免互相挤占
+  const mapRow = (row: EventRow) => ({
     id: row.id,
     ticker: row.ticker,
     type: row.type,
@@ -105,7 +101,26 @@ export function getEvents(ticker?: string, limit = 50) {
     description: row.description ?? undefined,
     descriptionZh: (row as any).description_zh ?? undefined,
     metadata: JSON.parse(row.metadata || "{}") as Record<string, unknown>,
-  }));
+  });
+
+  if (ticker) {
+    // 股票详情页：所有事件混合，不限类型
+    const rows = db.prepare(
+      "SELECT * FROM events WHERE ticker = ? ORDER BY date DESC, id DESC LIMIT ?"
+    ).all(ticker, limit) as EventRow[];
+    return rows.map(mapRow);
+  }
+
+  // 首页：SEC 事件（非 MARKET_NEWS）50 条 + 市场新闻 30 条，合并返回
+  const secRows = db.prepare(
+    "SELECT * FROM events WHERE type != 'MARKET_NEWS' ORDER BY date DESC, id DESC LIMIT ?"
+  ).all(limit) as EventRow[];
+
+  const newsRows = db.prepare(
+    "SELECT * FROM events WHERE type = 'MARKET_NEWS' ORDER BY date DESC, id DESC LIMIT 30"
+  ).all() as EventRow[];
+
+  return [...secRows.map(mapRow), ...newsRows.map(mapRow)];
 }
 
 export function isStockFresh(ticker: string, maxAgeSeconds = 60): boolean {
