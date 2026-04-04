@@ -64,12 +64,12 @@ export function EventsFeed({ events }: { events: Event[] }) {
       {/* Filter tabs + lang toggle */}
       <div className="border-b border-[#D4CCB8] py-4">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-2 min-w-0">
-          <div className="flex min-w-0 flex-1 flex-wrap gap-2 overflow-x-auto">
+          <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5">
             {filters.map(f => (
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
-                className={`font-mono text-[11px] tracking-wider uppercase px-3 py-1 rounded transition-colors whitespace-nowrap
+                className={`font-mono text-[11px] tracking-wider uppercase px-3 py-1 rounded transition-colors whitespace-nowrap shrink-0
                   ${activeFilter === f
                     ? "bg-[#1A1A2E] text-[#E8E3D8]"
                     : "text-[#5C5C6E] hover:text-[#1A1A2E] hover:bg-[#EDE8DE]"
@@ -91,7 +91,7 @@ export function EventsFeed({ events }: { events: Event[] }) {
             title="切换语言 / Toggle language"
           >
             <Languages className="size-3.5" />
-            {lang === "zh" ? "中文" : "EN"}
+            {lang === "zh" ? "EN" : "中文"}
           </button>
         </div>
       </div>

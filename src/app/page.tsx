@@ -93,7 +93,7 @@ export default async function Home() {
             Signal Stream
           </p>
           <h2 className="font-display text-2xl text-[#1A1A2E] sm:text-3xl">
-            SEC Filings
+            Events & News
           </h2>
         </div>
         <EventsFeed events={events} />
