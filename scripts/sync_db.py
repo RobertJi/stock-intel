@@ -45,13 +45,25 @@ def supa_upsert(table: str, rows: list[dict], on_conflict: str = ""):
 
 
 def supa_insert_ignore(table: str, rows: list[dict]):
-    """Insert rows, ignoring duplicates."""
+    """Insert rows, ignoring duplicates (on_conflict = do nothing)."""
+    if not rows:
+        return
     url = f"{SUPABASE_URL}/rest/v1/{table}"
     headers = supa_headers()
     headers["Prefer"] = "resolution=ignore-duplicates,return=minimal"
-    resp = requests.post(url, headers=headers, json=rows, timeout=30)
-    resp.raise_for_status()
-    return resp
+    # Insert in batches to avoid hitting payload limits
+    batch_size = 50
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i:i + batch_size]
+        resp = requests.post(url, headers=headers, json=batch, timeout=30)
+        if resp.status_code == 409:
+            # Conflict on batch — insert one by one
+            for row in batch:
+                r = requests.post(url, headers=headers, json=[row], timeout=30)
+                if r.status_code not in (200, 201, 409):
+                    r.raise_for_status()
+        elif resp.status_code not in (200, 201):
+            resp.raise_for_status()
 
 
 def log_sync(type_: str, status: str, message: str):
