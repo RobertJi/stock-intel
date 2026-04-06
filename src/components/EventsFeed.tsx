@@ -38,10 +38,18 @@ function localizeTitle(title: string, lang: "zh" | "en"): string {
   const insiderBuy = title.match(/(Insider\s+.*?Purchase):\s*([\d,]+)\s+shares?/i);
   if (insiderBuy) return `内幕人士买入 ${insiderBuy[2]} 股`;
   // Known English patterns
+  // Clean up SEC boilerplate prefixes
+  const cleaned = title
+    .replace(/^Item\s+\d+\.\d+\s*[\u2014\-\.]*\s*/i, '') // Remove "Item 8.01 —"
+    .replace(/\.?\s*Filed with the SEC\.?/i, '')           // Remove "Filed with the SEC."
+    .replace(/\.?\s*The information set forth in\.?/i, '') // Remove trailing clause
+    .replace(/^Entry into a?\s*/i, '')                     // Remove "Entry into a"
+    .trim();
+
   const map: [RegExp, string][] = [
     [/earnings|financial results/i, "财报发布"],
     [/executive change|officer|director/i, "高管变动"],
-    [/material.*agreement/i, "重要协议"],
+    [/material.*definitive.*agreement|material.*agreement/i, "重要协议签订"],
     [/agreement.*terminat/i, "协议终止"],
     [/acquisition|merger/i, "并购交易"],
     [/shareholder.*vote/i, "股东投票"],
@@ -50,9 +58,14 @@ function localizeTitle(title: string, lang: "zh" | "en"): string {
     [/impairment/i, "减值计提"],
     [/charter|amendment/i, "章程修订"],
     [/regulation\s+fd/i, "Reg FD 公平信息掫露"],
+    [/other events?/i, "其他公告事项"],
+    [/unregistered.*sale|sale.*securities/i, "非公开发行证券"],
+    [/^\s*$/i, "公告事项"],  // empty after cleaning
   ];
-  for (const [re, zh] of map) if (re.test(title)) return zh;
-  return title; // fallback to original
+  const target = cleaned || title;
+  for (const [re, zh] of map) if (re.test(target)) return zh;
+  // If cleaned is shorter and meaningful, use it; otherwise original
+  return cleaned.length > 3 ? cleaned : title;
 }
 
 const IMPACT_DOT: Record<string, string> = {
