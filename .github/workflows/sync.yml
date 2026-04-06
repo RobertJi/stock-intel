@@ -1,0 +1,77 @@
+name: Stock Intel Sync
+
+on:
+  schedule:
+    # Prices: every 30 min during US market hours (13:30-21:00 UTC = 9:30-17:00 ET)
+    - cron: '0,30 13-20 * * 1-5'
+    # Events + Form4: once daily at 2am UTC
+    - cron: '0 2 * * *'
+    # News: every 2 hours
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Sync mode (all/prices/events/form4/news)'
+        required: false
+        default: 'all'
+
+jobs:
+  sync-prices:
+    name: Sync Prices
+    if: github.event_name == 'workflow_dispatch' || (github.event.schedule == '0,30 13-20 * * 1-5')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+      - name: Sync prices
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python scripts/sync_db.py prices
+
+  sync-events:
+    name: Sync Events & Form4
+    if: github.event_name == 'workflow_dispatch' || (github.event.schedule == '0 2 * * *')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+      - name: Sync events
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python scripts/sync_db.py events
+      - name: Sync Form4
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python scripts/sync_db.py form4
+
+  sync-news:
+    name: Sync Market News
+    if: github.event_name == 'workflow_dispatch' || (github.event.schedule == '0 */2 * * *')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+      - name: Sync news
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python scripts/sync_db.py news
