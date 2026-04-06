@@ -81,7 +81,7 @@ def translate_to_chinese(text: str) -> str:
         resp = requests.post(
             f"{OPENROUTER_BASE_URL}/chat/completions",
             json={
-                "model": "openai/gpt-4o-mini",
+                "model": "deepseek/deepseek-chat",
                 "max_tokens": 300,
                 "messages": [{
                     "role": "user",
