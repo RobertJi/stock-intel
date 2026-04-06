@@ -72,23 +72,30 @@ function StockChartInner({ ticker, basePrice, history, insiderTrades = [] }: Sto
     }))
     .filter(t => t.yPrice !== undefined);
 
+  const hasBuy = insiderTrades.some((trade) => trade.type === "INSIDER_BUY");
+  const hasSell = insiderTrades.some((trade) => trade.type === "INSIDER_SELL");
+
   return (
     <div className="h-[320px] w-full">
       {/* Legend */}
       {insiderTrades.length > 0 && (
         <div className="mb-2 flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 12 12">
-              <polygon points="6,1 1,11 11,11" fill="#1B4332" opacity="0.85" />
-            </svg>
-            <span className="font-mono text-[10px] text-[#5C5C6E] uppercase tracking-wider">Insider Buy</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 12 12">
-              <polygon points="6,11 1,1 11,1" fill="#7C1D1D" opacity="0.85" />
-            </svg>
-            <span className="font-mono text-[10px] text-[#5C5C6E] uppercase tracking-wider">Insider Sell</span>
-          </div>
+          {hasBuy && (
+            <div className="flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 12 12">
+                <polygon points="6,1 1,11 11,11" fill="#1B4332" opacity="0.85" />
+              </svg>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#5C5C6E]">内幕买入</span>
+            </div>
+          )}
+          {hasSell && (
+            <div className="flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 12 12">
+                <polygon points="6,11 1,1 11,1" fill="#7C1D1D" opacity="0.85" />
+              </svg>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#5C5C6E]">内幕卖出</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -126,7 +133,7 @@ function StockChartInner({ ticker, basePrice, history, insiderTrades = [] }: Sto
                       trade.type === "INSIDER_BUY" ? "text-[#86EFAC]" : "text-[#FCA5A5]"
                     }`}>
                       <p>{trade.type === "INSIDER_BUY" ? "▲ 内幕买入" : "▼ 内幕卖出"}</p>
-                      <p className="text-[#E8E3D8]/60">{trade.insiderName?.split(" ").slice(-1)[0]}</p>
+                      <p className="text-[#E8E3D8]/60">{trade.insiderName}</p>
                       <p>{trade.shares.toLocaleString()} 股 @ ${trade.price}</p>
                     </div>
                   )}

@@ -9,8 +9,8 @@ export async function fetchStocks() {
   return getStocks()
 }
 
-export async function fetchEvents(ticker?: string) {
-  return getEvents(ticker, 50)
+export async function fetchEvents(ticker?: string, limit = 50) {
+  return getEvents(ticker, limit)
 }
 
 export type StockData = Awaited<ReturnType<typeof getStocks>>[number]
