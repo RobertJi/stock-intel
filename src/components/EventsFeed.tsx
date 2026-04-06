@@ -10,19 +10,50 @@ const EVENT_LABELS: Record<string, string> = {
   MARKET_NEWS:          "市场新闻",
   INSIDER_BUY:          "🟢 内幕买入",
   INSIDER_SELL:         "🔴 内幕卖出",
-  EARNINGS:             "Earnings",
-  EXECUTIVE_CHANGE:     "Executive",
-  MATERIAL_AGREEMENT:   "Agreement",
-  AGREEMENT_TERMINATED: "Terminated",
-  ACQUISITION:          "Acquisition",
+  EARNINGS:             "财报事项",
+  EXECUTIVE_CHANGE:     "高管变动",
+  MATERIAL_AGREEMENT:   "重要协议",
+  AGREEMENT_TERMINATED: "协议终止",
+  ACQUISITION:          "并购交易",
   REGULATION_FD:        "Reg FD",
-  SHAREHOLDER_VOTE:     "Vote",
-  DEBT_OBLIGATION:      "Debt",
-  RESTATEMENT:          "Restatement",
-  IMPAIRMENT:           "Impairment",
-  OTHER_EVENTS:         "Other",
+  SHAREHOLDER_VOTE:     "股东投票",
+  DEBT_OBLIGATION:      "负债事项",
+  RESTATEMENT:          "财报重述",
+  IMPAIRMENT:           "减值计提",
+  OTHER_EVENTS:         "其他",
   SEC_8K:               "8-K",
+  CHARTER_AMENDMENT:    "章程修订",
+  BANKRUPTCY:           "破产等事项",
+  COST_REDUCTION:       "成本删减",
+  DELISTING:            "退市风险",
+  FINANCIAL_EXHIBITS:   "财务附件",
 };
+
+// 标题规则映射（不依赖 AI 翻译）
+function localizeTitle(title: string, lang: "zh" | "en"): string {
+  if (lang === "en") return title;
+  // Insider trades
+  const insiderSell = title.match(/(Insider\s+.*?Sale):\s*([\d,]+)\s+shares?/i);
+  if (insiderSell) return `内幕人士卖出 ${insiderSell[2]} 股`;
+  const insiderBuy = title.match(/(Insider\s+.*?Purchase):\s*([\d,]+)\s+shares?/i);
+  if (insiderBuy) return `内幕人士买入 ${insiderBuy[2]} 股`;
+  // Known English patterns
+  const map: [RegExp, string][] = [
+    [/earnings|financial results/i, "财报发布"],
+    [/executive change|officer|director/i, "高管变动"],
+    [/material.*agreement/i, "重要协议"],
+    [/agreement.*terminat/i, "协议终止"],
+    [/acquisition|merger/i, "并购交易"],
+    [/shareholder.*vote/i, "股东投票"],
+    [/debt|obligation/i, "负债事项"],
+    [/restatement/i, "财报重述"],
+    [/impairment/i, "减值计提"],
+    [/charter|amendment/i, "章程修订"],
+    [/regulation\s+fd/i, "Reg FD 公平信息掫露"],
+  ];
+  for (const [re, zh] of map) if (re.test(title)) return zh;
+  return title; // fallback to original
+}
 
 const IMPACT_DOT: Record<string, string> = {
   BULLISH: "bg-[#1B4332]",
@@ -143,7 +174,7 @@ export function EventsFeed({ events }: { events: Event[] }) {
                   title={event.impact}
                 />
               </div>
-              <p className="break-words text-sm leading-snug font-medium text-[#1A1A2E]">{event.title}</p>
+              <p className="break-words text-sm leading-snug font-medium text-[#1A1A2E]">{localizeTitle(event.title, lang)}</p>
               {event.description && (
                 <p className="line-clamp-3 text-xs leading-relaxed text-[#5C5C6E]" style={{overflowWrap:'break-word'}}>
                   {lang === "zh" && (event as any).descriptionZh
