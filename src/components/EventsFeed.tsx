@@ -174,7 +174,11 @@ export function EventsFeed({ events }: { events: Event[] }) {
                   title={event.impact}
                 />
               </div>
-              <p className="break-words text-sm leading-snug font-medium text-[#1A1A2E]">{localizeTitle(event.title, lang)}</p>
+              <p className="break-words text-sm leading-snug font-medium text-[#1A1A2E]">
+                {lang === "zh" && (event as any).descriptionZh
+                  ? (event as any).descriptionZh
+                  : localizeTitle(event.title, lang)}
+              </p>
               {event.description && (
                 <p className="line-clamp-3 text-xs leading-relaxed text-[#5C5C6E]" style={{overflowWrap:'break-word'}}>
                   {lang === "zh" && (event as any).descriptionZh
