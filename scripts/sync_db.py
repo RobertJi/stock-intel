@@ -231,6 +231,11 @@ def sync_news():
     for item in articles:
         raw_title = item["title"]
         zh_title = translate_to_chinese(raw_title) if raw_title else ""
+        metadata = item.get("metadata", {}) or {}
+        metadata.update({
+            "publishedTs": item.get("published_ts", 0),
+            "primaryTicker": item["ticker"],
+        })
         rows.append({
             "ticker": item["ticker"],
             "type": "MARKET_NEWS",
@@ -241,7 +246,7 @@ def sync_news():
             "impact": "NEUTRAL",
             "description": "",
             "description_zh": zh_title,
-            "metadata": {},
+            "metadata": metadata,
         })
 
     if rows:

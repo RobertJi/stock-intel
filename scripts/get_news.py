@@ -35,6 +35,11 @@ def fetch_news_for_ticker(ticker: str) -> list[dict]:
         if not ts:
             continue
         date_str = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+        thumb = ""
+        resolutions = ((item.get("thumbnail") or {}).get("resolutions") or [])
+        if resolutions:
+            thumb = resolutions[-1].get("url", "") or resolutions[0].get("url", "")
+
         results.append({
             "ticker": ticker,
             "type": "MARKET_NEWS",
@@ -45,6 +50,12 @@ def fetch_news_for_ticker(ticker: str) -> list[dict]:
             "impact": "NEUTRAL",
             "description": "",
             "published_ts": ts,
+            "metadata": {
+                "uuid": item.get("uuid", ""),
+                "publisher": item.get("publisher", "Yahoo Finance"),
+                "relatedTickers": item.get("relatedTickers", []),
+                "thumbnail": thumb,
+            },
         })
     return results
 

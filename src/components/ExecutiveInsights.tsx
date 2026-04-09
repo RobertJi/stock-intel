@@ -300,12 +300,12 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
             Signal Flow
           </p>
           <h2 className="font-display text-xl text-[#1A1A2E] sm:text-2xl">
-            {selectedSummary ? `${selectedSummary.name} 的交易记录` : "近期事件"}
+            {selectedSummary ? `${selectedSummary.name} 的交易记录` : "近期事件与市场动态"}
           </h2>
           <p className="mt-2 font-sans text-sm text-[#5C5C6E]">
             {selectedSummary
               ? `当前仅展示 ${selectedSummary.name} 的内幕交易披露。`
-              : "可继续按事件类型筛选，也可在上方高管卡片中快速聚焦某位高管。"}
+              : "现在会同时展示 SEC 事件与该股票相关的市场动态，也可继续按事件类型筛选。"}
           </p>
         </div>
 

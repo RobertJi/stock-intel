@@ -17,7 +17,7 @@ export default async function StockDetailPage({ params }: Props) {
 
   if (!stock) notFound();
 
-  const detailEvents = tickerEvents.filter((event) => event.type !== "MARKET_NEWS");
+  const detailEvents = tickerEvents;
   const isPos = stock.changePct >= 0;
 
   return (
@@ -59,7 +59,7 @@ export default async function StockDetailPage({ params }: Props) {
       </div>
 
       {detailEvents.length === 0 ? (
-        <p className="py-6 font-sans text-sm text-[#5C5C6E]">暂无近期事件</p>
+        <p className="py-6 font-sans text-sm text-[#5C5C6E]">暂无近期事件或市场动态</p>
       ) : (
         <ExecutiveInsights stock={stock} events={detailEvents} />
       )}
