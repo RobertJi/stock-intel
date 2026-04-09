@@ -62,15 +62,34 @@ export async function getEvents(ticker?: string, limit = 50): Promise<EventData[
   })
 
   if (ticker) {
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('ticker', ticker)
-      .order('date', { ascending: false })
-      .order('id', { ascending: false })
-      .limit(limit)
-    if (error) throw error
-    return (data ?? []).map(mapRow)
+    const newsLimit = Math.min(30, Math.max(12, Math.floor(limit / 4)))
+    const [secResult, newsResult] = await Promise.all([
+      supabase
+        .from('events')
+        .select('*')
+        .eq('ticker', ticker)
+        .neq('type', 'MARKET_NEWS')
+        .order('date', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(limit),
+      supabase
+        .from('events')
+        .select('*')
+        .eq('ticker', ticker)
+        .eq('type', 'MARKET_NEWS')
+        .order('date', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(newsLimit),
+    ])
+    if (secResult.error) throw secResult.error
+    if (newsResult.error) throw newsResult.error
+
+    return [...(newsResult.data ?? []), ...(secResult.data ?? [])]
+      .map(mapRow)
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date < b.date ? 1 : -1
+        return b.id - a.id
+      })
   }
 
   // Homepage: SEC events + market news fetched separately to avoid crowding each other
