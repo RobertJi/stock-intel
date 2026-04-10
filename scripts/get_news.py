@@ -7,7 +7,60 @@ import urllib.request
 from datetime import datetime, timezone
 
 WATCHLIST = ["META", "NFLX", "NVDA", "OXY"]
-NEWS_PER_TICKER = 5
+NEWS_PER_TICKER = 8
+
+COMPANY_ALIASES = {
+    "META": ["meta", "facebook", "instagram", "whatsapp", "threads"],
+    "NFLX": ["netflix", "nflx"],
+    "NVDA": ["nvidia", "nvda", "geforce", "cuda", "jensen huang"],
+    "OXY": ["occidental", "occidental petroleum", "oxy"],
+}
+
+GENERIC_PATTERNS = [
+    "stock market today",
+    "dow jones",
+    "s&p 500",
+    "nasdaq",
+    "best stocks",
+    "millionaire",
+    "dividend",
+    "buying opportunity",
+    "etf",
+    "bitcoin",
+    "ethereum",
+    "cryptocurrency",
+    "market dip",
+    "bull case",
+]
+
+
+def classify_news_relevance(ticker: str, title: str, related_tickers: list[str]) -> dict:
+    title_lower = (title or "").lower()
+    aliases = COMPANY_ALIASES.get(ticker, [])
+    alias_hit = any(alias in title_lower for alias in aliases)
+    generic_hit = any(pattern in title_lower for pattern in GENERIC_PATTERNS)
+    related_hit = ticker in related_tickers
+    narrow_related = related_hit and len(related_tickers) <= 2
+
+    score = 0
+    if alias_hit:
+        score += 5
+    if related_hit:
+        score += 1
+    if narrow_related:
+        score += 1
+    if generic_hit and not alias_hit:
+        score -= 3
+
+    scope = "direct" if alias_hit else "related" if score >= 2 else "broad"
+    detail_eligible = alias_hit or score >= 3
+    return {
+        "score": score,
+        "scope": scope,
+        "detailEligible": detail_eligible,
+        "aliasHit": alias_hit,
+        "genericHit": generic_hit,
+    }
 
 
 def fetch_news_for_ticker(ticker: str) -> list[dict]:
@@ -40,10 +93,14 @@ def fetch_news_for_ticker(ticker: str) -> list[dict]:
         if resolutions:
             thumb = resolutions[-1].get("url", "") or resolutions[0].get("url", "")
 
+        title = item.get("title", "").strip()
+        related_tickers = item.get("relatedTickers", [])
+        relevance = classify_news_relevance(ticker, title, related_tickers)
+
         results.append({
             "ticker": ticker,
             "type": "MARKET_NEWS",
-            "title": item.get("title", "").strip(),
+            "title": title,
             "date": date_str,
             "source": item.get("publisher", "Yahoo Finance"),
             "link": item.get("link") or item.get("url") or "",
@@ -53,8 +110,13 @@ def fetch_news_for_ticker(ticker: str) -> list[dict]:
             "metadata": {
                 "uuid": item.get("uuid", ""),
                 "publisher": item.get("publisher", "Yahoo Finance"),
-                "relatedTickers": item.get("relatedTickers", []),
+                "relatedTickers": related_tickers,
                 "thumbnail": thumb,
+                "newsScope": relevance["scope"],
+                "newsScore": relevance["score"],
+                "detailEligible": relevance["detailEligible"],
+                "aliasHit": relevance["aliasHit"],
+                "genericHit": relevance["genericHit"],
             },
         })
     return results
