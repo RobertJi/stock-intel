@@ -12,44 +12,28 @@ const COMPANY_ALIASES: Record<string, string[]> = {
   OXY: ['occidental', 'occidental petroleum', 'oxy'],
 }
 
-const GENERIC_PATTERNS = [
-  'stock market today',
-  'dow jones',
-  's&p 500',
-  'nasdaq',
-  'best stocks',
-  'millionaire',
-  'dividend',
-  'buying opportunity',
-  'etf',
-  'bitcoin',
-  'ethereum',
-  'cryptocurrency',
-  'market dip',
-  'bull case',
-]
-
 function isRelevantDetailNews(ticker: string, row: Record<string, unknown>): boolean {
   const metadata = (row.metadata as Record<string, unknown>) ?? {}
+  if (typeof metadata.aliasHit === 'boolean') return metadata.aliasHit
   if (typeof metadata.detailEligible === 'boolean') return metadata.detailEligible
 
   const title = String(row.title ?? '').toLowerCase()
   const aliases = COMPANY_ALIASES[ticker] ?? []
-  const aliasHit = aliases.some((alias) => title.includes(alias))
-  const genericHit = GENERIC_PATTERNS.some((pattern) => title.includes(pattern))
-  const relatedTickers = Array.isArray(metadata.relatedTickers)
-    ? metadata.relatedTickers.map((value) => String(value))
-    : []
-  const relatedHit = relatedTickers.includes(ticker)
-  const narrowRelated = relatedHit && relatedTickers.length <= 2
+  return aliases.some((alias) => title.includes(alias))
+}
 
-  let score = 0
-  if (aliasHit) score += 5
-  if (relatedHit) score += 1
-  if (narrowRelated) score += 1
-  if (genericHit && !aliasHit) score -= 3
-
-  return aliasHit || score >= 3
+function dedupeEvents(rows: Record<string, unknown>[]) {
+  const seen = new Set<string>()
+  return rows.filter((row) => {
+    const type = String(row.type ?? '')
+    const link = String(row.link ?? '')
+    const title = String(row.title ?? '')
+    const date = String(row.date ?? '')
+    const key = `${type}::${link || title}::${date}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 export type StockData = {
@@ -131,11 +115,11 @@ export async function getEvents(ticker?: string, limit = 50): Promise<EventData[
     if (secResult.error) throw secResult.error
     if (newsResult.error) throw newsResult.error
 
-    const relevantNews = (newsResult.data ?? [])
-      .filter((row) => isRelevantDetailNews(ticker, row))
-      .slice(0, desiredNewsCount)
+    const relevantNews = dedupeEvents(
+      (newsResult.data ?? []).filter((row) => isRelevantDetailNews(ticker, row))
+    ).slice(0, desiredNewsCount)
 
-    return [...relevantNews, ...(secResult.data ?? [])]
+    return dedupeEvents([...(relevantNews ?? []), ...((secResult.data ?? []) as Record<string, unknown>[])])
       .map(mapRow)
       .sort((a, b) => {
         if (a.date !== b.date) return a.date < b.date ? 1 : -1

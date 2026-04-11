@@ -53,7 +53,7 @@ def classify_news_relevance(ticker: str, title: str, related_tickers: list[str])
         score -= 3
 
     scope = "direct" if alias_hit else "related" if score >= 2 else "broad"
-    detail_eligible = alias_hit or score >= 3
+    detail_eligible = alias_hit
     return {
         "score": score,
         "scope": scope,
