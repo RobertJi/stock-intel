@@ -63,8 +63,28 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
   const [rangeDays, setRangeDays] = useState<(typeof RANGE_OPTIONS)[number]["days"]>(90);
   const [selectedExecutive, setSelectedExecutive] = useState<string | null>(null);
 
+  const marketNews = useMemo(
+    () => events.filter((event) => event.type === "MARKET_NEWS"),
+    [events]
+  );
+
+  const companyNews = useMemo(
+    () => marketNews.filter((event) => ((event.metadata ?? {}) as Record<string, unknown>).newsBucket === "company"),
+    [marketNews]
+  );
+
+  const ecosystemNews = useMemo(
+    () => marketNews.filter((event) => ((event.metadata ?? {}) as Record<string, unknown>).newsBucket === "ecosystem"),
+    [marketNews]
+  );
+
+  const signalEvents = useMemo(
+    () => events.filter((event) => event.type !== "MARKET_NEWS"),
+    [events]
+  );
+
   const allInsiderTrades = useMemo<InsiderTrade[]>(() => {
-    return events
+    return signalEvents
       .filter((event) => event.type === "INSIDER_BUY" || event.type === "INSIDER_SELL")
       .map((event) => {
         const metadata = (event.metadata ?? {}) as Record<string, unknown>;
@@ -78,7 +98,7 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
         };
       })
       .filter((trade) => trade.insiderName);
-  }, [events]);
+  }, [signalEvents]);
 
   const sellTradesInRange = useMemo(() => {
     return allInsiderTrades.filter(
@@ -129,12 +149,17 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
   }, [allInsiderTrades, selectedExecutive]);
 
   const filteredEvents = useMemo(() => {
-    if (!selectedExecutive) return events;
-    return events.filter((event) => {
+    if (!selectedExecutive) {
+      return [...companyNews, ...signalEvents].sort((a, b) => {
+        if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+        return b.id - a.id;
+      });
+    }
+    return signalEvents.filter((event) => {
       const metadata = (event.metadata ?? {}) as Record<string, unknown>;
       return String(metadata.insiderName ?? "") === selectedExecutive;
     });
-  }, [events, selectedExecutive]);
+  }, [companyNews, signalEvents, selectedExecutive]);
 
   const totals = useMemo(() => {
     return sellTradesInRange.reduce(
@@ -305,7 +330,7 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
           <p className="mt-2 font-sans text-sm text-[#5C5C6E]">
             {selectedSummary
               ? `当前仅展示 ${selectedSummary.name} 的内幕交易披露。`
-              : "现在会同时展示 SEC 事件与该股票相关的市场动态，也可继续按事件类型筛选。"}
+              : "主信号流现在只放 SEC 事件和公司直接动态，竞争/生态新闻放到下方单独查看。"}
           </p>
         </div>
 
@@ -319,6 +344,21 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
           />
         )}
       </section>
+
+      {!selectedSummary && ecosystemNews.length > 0 && (
+        <section className="border-t border-[#D4CCB8]">
+          <div className="border-b border-[#D4CCB8] py-5">
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.3em] text-[#B5882B]">
+              Ecosystem Watch
+            </p>
+            <h2 className="font-display text-xl text-[#1A1A2E] sm:text-2xl">竞争与生态动态</h2>
+            <p className="mt-2 font-sans text-sm text-[#5C5C6E]">
+              这里放和该股票有关、但不属于公司直接动态的竞争格局、供应链、合作与生态新闻。
+            </p>
+          </div>
+          <EventsFeed events={ecosystemNews} defaultFilter="MARKET_NEWS" />
+        </section>
+      )}
     </div>
   );
 }

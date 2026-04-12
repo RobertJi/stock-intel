@@ -12,14 +12,35 @@ const COMPANY_ALIASES: Record<string, string[]> = {
   OXY: ['occidental', 'occidental petroleum', 'oxy'],
 }
 
-function isRelevantDetailNews(ticker: string, row: Record<string, unknown>): boolean {
+const COMPARISON_PATTERNS = [' vs ', ' versus ', ' than ', ' challenge', ' challenging ', ' compet', ' partner', ' partnership']
+const IGNORE_RELATED_EXACT = new Set(['CL=F', 'GC=F', 'SI=F', 'BTC-USD', 'ETH-USD', 'XRP-USD'])
+
+function getNewsBucket(ticker: string, row: Record<string, unknown>): 'company' | 'ecosystem' | 'broad' {
   const metadata = (row.metadata as Record<string, unknown>) ?? {}
-  if (typeof metadata.aliasHit === 'boolean') return metadata.aliasHit
-  if (typeof metadata.detailEligible === 'boolean') return metadata.detailEligible
+  const stored = metadata.newsBucket ?? metadata.newsScope
+  if (stored === 'company' || stored === 'ecosystem' || stored === 'broad') return stored
+  if (stored === 'direct') return 'company'
+  if (stored === 'related') return 'ecosystem'
 
   const title = String(row.title ?? '').toLowerCase()
   const aliases = COMPANY_ALIASES[ticker] ?? []
-  return aliases.some((alias) => title.includes(alias))
+  const aliasHit = aliases.some((alias) => title.includes(alias))
+  if (!aliasHit) return 'broad'
+
+  const genericHit = title.includes('stock market today') || title.includes('dow jones') || title.includes('s&p 500') || title.includes('nasdaq')
+  const comparisonHit = COMPARISON_PATTERNS.some((pattern) => title.includes(pattern))
+  const relatedTickers = Array.isArray(metadata.relatedTickers)
+    ? metadata.relatedTickers.map((value) => String(value))
+    : []
+  const otherRelated = relatedTickers.filter(
+    (symbol) => symbol !== ticker && !symbol.startsWith('^') && !IGNORE_RELATED_EXACT.has(symbol)
+  )
+
+  return genericHit || comparisonHit || otherRelated.length > 0 ? 'ecosystem' : 'company'
+}
+
+function isRelevantDetailNews(ticker: string, row: Record<string, unknown>): boolean {
+  return getNewsBucket(ticker, row) !== 'broad'
 }
 
 function dedupeEvents(rows: Record<string, unknown>[]) {
@@ -117,9 +138,15 @@ export async function getEvents(ticker?: string, limit = 50): Promise<EventData[
 
     const relevantNews = dedupeEvents(
       (newsResult.data ?? []).filter((row) => isRelevantDetailNews(ticker, row))
-    ).slice(0, desiredNewsCount)
+    )
+    const companyNews = relevantNews.filter((row) => getNewsBucket(ticker, row) === 'company').slice(0, desiredNewsCount)
+    const ecosystemNews = relevantNews.filter((row) => getNewsBucket(ticker, row) === 'ecosystem').slice(0, 6)
 
-    return dedupeEvents([...(relevantNews ?? []), ...((secResult.data ?? []) as Record<string, unknown>[])])
+    return dedupeEvents([
+      ...companyNews,
+      ...ecosystemNews,
+      ...((secResult.data ?? []) as Record<string, unknown>[]),
+    ])
       .map(mapRow)
       .sort((a, b) => {
         if (a.date !== b.date) return a.date < b.date ? 1 : -1

@@ -33,33 +33,52 @@ GENERIC_PATTERNS = [
     "bull case",
 ]
 
+COMPARISON_PATTERNS = [
+    " vs ",
+    " versus ",
+    " than ",
+    " challenge",
+    " challenging ",
+    " compet",
+    " partner",
+    " partnership",
+]
+
+IGNORE_RELATED_PREFIXES = ["^"]
+IGNORE_RELATED_EXACT = {"CL=F", "GC=F", "SI=F", "BTC-USD", "ETH-USD", "XRP-USD"}
+
 
 def classify_news_relevance(ticker: str, title: str, related_tickers: list[str]) -> dict:
     title_lower = (title or "").lower()
     aliases = COMPANY_ALIASES.get(ticker, [])
     alias_hit = any(alias in title_lower for alias in aliases)
     generic_hit = any(pattern in title_lower for pattern in GENERIC_PATTERNS)
-    related_hit = ticker in related_tickers
-    narrow_related = related_hit and len(related_tickers) <= 2
+    comparison_hit = any(pattern in title_lower for pattern in COMPARISON_PATTERNS)
 
-    score = 0
+    cleaned_related = []
+    for symbol in related_tickers:
+        symbol = str(symbol)
+        if symbol == ticker:
+            continue
+        if symbol in IGNORE_RELATED_EXACT:
+            continue
+        if any(symbol.startswith(prefix) for prefix in IGNORE_RELATED_PREFIXES):
+            continue
+        cleaned_related.append(symbol)
+
+    scope = "broad"
     if alias_hit:
-        score += 5
-    if related_hit:
-        score += 1
-    if narrow_related:
-        score += 1
-    if generic_hit and not alias_hit:
-        score -= 3
+        scope = "ecosystem" if (generic_hit or comparison_hit or cleaned_related) else "company"
 
-    scope = "direct" if alias_hit else "related" if score >= 2 else "broad"
     detail_eligible = alias_hit
     return {
-        "score": score,
+        "score": 5 if alias_hit else 0,
         "scope": scope,
         "detailEligible": detail_eligible,
         "aliasHit": alias_hit,
         "genericHit": generic_hit,
+        "comparisonHit": comparison_hit,
+        "newsBucket": scope,
     }
 
 
