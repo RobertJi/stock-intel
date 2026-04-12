@@ -1,6 +1,26 @@
 import Link from "next/link";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
+// Upcoming earnings dates (YYYY-MM-DD). Update each quarter.
+const EARNINGS_DATES: Record<string, string> = {
+  META: "2026-04-29",
+  NFLX: "2026-04-15",
+  NVDA: "2026-05-28",
+  OXY: "2026-05-05",
+};
+
+function getEarningsBadge(ticker: string): { label: string; daysLeft: number } | null {
+  const dateStr = EARNINGS_DATES[ticker];
+  if (!dateStr) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const earningsDate = new Date(dateStr + "T00:00:00");
+  const daysLeft = Math.round((earningsDate.getTime() - today.getTime()) / 86400000);
+  if (daysLeft < 0 || daysLeft > 30) return null;
+  const month = earningsDate.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  return { label: `财报 in ${daysLeft}d · ${month}`, daysLeft };
+}
+
 import { fetchEvents, fetchStocks } from "@/lib/server-data";
 import { EventsFeed } from "@/components/EventsFeed";
 
@@ -82,6 +102,17 @@ export default async function Home() {
                   {stock.changeAmt.toFixed(2)}
                 </span>
               </p>
+              {(() => {
+                const badge = getEarningsBadge(stock.ticker);
+                if (!badge) return null;
+                return (
+                  <p className={`mt-2 font-mono text-[10px] ${
+                    badge.daysLeft <= 3 ? "text-[#B5882B]" : "text-[#5C5C6E]"
+                  }`}>
+                    📅 {badge.label}
+                  </p>
+                );
+              })()}
             </Link>
           );
         })}

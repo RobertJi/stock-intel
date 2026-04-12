@@ -120,7 +120,7 @@ export function EventsFeed({
   return (
     <div>
       <div className="border-b border-[#D4CCB8] py-4">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-2">
+        <div className="flex min-w-0 items-center gap-x-2">
           <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5">
             {filters.map((filter) => (
               <button
@@ -206,7 +206,7 @@ export function EventsFeed({
                   </div>
                 )}
                 <p className="break-words font-medium text-sm leading-snug text-[#1A1A2E]">
-                  {lang === "zh" && event.descriptionZh ? event.descriptionZh : localizeTitle(event.title, lang)}
+                  {localizeTitle(event.title, lang)}
                 </p>
                 {event.description && (
                   <p className="line-clamp-3 text-xs leading-relaxed text-[#5C5C6E]" style={{ overflowWrap: "break-word" }}>
