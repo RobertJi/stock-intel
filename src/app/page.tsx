@@ -106,7 +106,7 @@ export default async function Home() {
                 const badge = getEarningsBadge(stock.ticker);
                 if (!badge) return null;
                 return (
-                  <p className={`mt-2 font-mono text-[10px] ${
+                  <p title="Est. date — update quarterly" className={`mt-2 font-mono text-[10px] ${
                     badge.daysLeft <= 3 ? "text-[#B5882B]" : "text-[#5C5C6E]"
                   }`}>
                     📅 {badge.label}
