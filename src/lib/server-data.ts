@@ -1,12 +1,13 @@
-import { getEvents, getStocks } from '@/lib/db'
+import { getEvents, getStocks, getWatchlist } from '@/lib/db'
 
 export type {} // keep file as a module
 
 const WATCHLIST = ['META', 'NFLX', 'NVDA', 'OXY']
 
 export async function fetchStocks() {
-  // Supabase is the source of truth; sync happens via GitHub Actions
-  return getStocks()
+  const watchlist = await getWatchlist()
+  const tickers = watchlist.map((w) => w.ticker)
+  return getStocks(tickers.length > 0 ? tickers : undefined)
 }
 
 export async function fetchEvents(ticker?: string, limit = 50) {

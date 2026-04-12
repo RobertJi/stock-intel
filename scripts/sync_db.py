@@ -14,13 +14,31 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 
-WATCHLIST = ["META", "NFLX", "NVDA", "OXY"]
-TICKER_CIK = {
-    "META": "0001326801",
-    "NFLX": "0001065280",
-    "NVDA": "0001045810",
-    "OXY": "0000797468",
-}
+def _load_watchlist() -> list[dict]:
+    """Fetch watchlist from Supabase. Fallback to hardcoded list on error."""
+    try:
+        resp = requests.get(
+            f"{SUPABASE_URL}/rest/v1/watchlist?select=ticker,cik,aliases&order=added_at.asc",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        if data:
+            print(f"  Watchlist loaded from Supabase: {[r['ticker'] for r in data]}")
+            return data
+    except Exception as exc:
+        print(f"  WARN: could not load watchlist from Supabase ({exc}), using fallback", file=sys.stderr)
+    return [
+        {"ticker": "META", "cik": "0001326801"},
+        {"ticker": "NFLX", "cik": "0001065280"},
+        {"ticker": "NVDA", "cik": "0001045810"},
+        {"ticker": "OXY",  "cik": "0000797468"},
+    ]
+
+_wl_data = _load_watchlist()
+WATCHLIST = [row["ticker"] for row in _wl_data]
+TICKER_CIK = {row["ticker"]: row["cik"] for row in _wl_data if row.get("cik")}
 
 
 def supa_headers():

@@ -36,8 +36,14 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="mt-auto">
-        <p className="font-mono text-[11px] uppercase tracking-widest text-[#6F7890]">
+      <div className="mt-auto space-y-3">
+        <Link
+          href="/settings"
+          className="block rounded px-3 py-2 font-sans text-sm text-[#6F7890] transition-colors hover:bg-white/[0.05] hover:text-[#8A93A8]"
+        >
+          ⚙ Settings
+        </Link>
+        <p className="px-3 font-mono text-[11px] uppercase tracking-widest text-[#6F7890]">
           Data: EDGAR · YF
         </p>
       </div>

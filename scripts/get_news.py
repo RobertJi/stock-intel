@@ -6,15 +6,40 @@ import time
 import urllib.request
 from datetime import datetime, timezone
 
-WATCHLIST = ["META", "NFLX", "NVDA", "OXY"]
 NEWS_PER_TICKER = 8
 
-COMPANY_ALIASES = {
-    "META": ["meta", "facebook", "instagram", "whatsapp", "threads"],
-    "NFLX": ["netflix", "nflx"],
-    "NVDA": ["nvidia", "nvda", "geforce", "cuda", "jensen huang"],
-    "OXY": ["occidental", "occidental petroleum", "oxy"],
-}
+
+def _load_watchlist_config() -> tuple[list[str], dict[str, list[str]]]:
+    """Load watchlist tickers and aliases from Supabase, fallback to hardcoded."""
+    import os, requests as _req
+    url = os.environ.get("SUPABASE_URL", "")
+    key = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if url and key:
+        try:
+            r = _req.get(
+                f"{url}/rest/v1/watchlist?select=ticker,aliases&order=added_at.asc",
+                headers={"apikey": key, "Authorization": f"Bearer {key}"},
+                timeout=10,
+            )
+            r.raise_for_status()
+            data = r.json()
+            tickers = [row["ticker"] for row in data]
+            aliases = {row["ticker"]: (row.get("aliases") or []) for row in data}
+            return tickers, aliases
+        except Exception:
+            pass
+    # Fallback
+    tickers = ["META", "NFLX", "NVDA", "OXY"]
+    aliases = {
+        "META": ["meta", "facebook", "instagram", "whatsapp", "threads"],
+        "NFLX": ["netflix", "nflx"],
+        "NVDA": ["nvidia", "nvda", "geforce", "cuda", "jensen huang"],
+        "OXY": ["occidental", "occidental petroleum", "oxy"],
+    }
+    return tickers, aliases
+
+
+WATCHLIST, COMPANY_ALIASES = _load_watchlist_config()
 
 GENERIC_PATTERNS = [
     "stock market today",

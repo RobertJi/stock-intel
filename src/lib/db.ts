@@ -57,6 +57,41 @@ function dedupeEvents(rows: Record<string, unknown>[]) {
   })
 }
 
+export type WatchlistItem = {
+  ticker: string
+  cik: string | null
+  aliases: string[] | null
+  added_at: string
+}
+
+export async function getWatchlist(): Promise<WatchlistItem[]> {
+  const { data, error } = await supabase
+    .from('watchlist')
+    .select('*')
+    .order('added_at', { ascending: true })
+  if (error) throw error
+  return (data ?? []) as WatchlistItem[]
+}
+
+export async function addToWatchlist(
+  ticker: string,
+  cik?: string | null,
+  aliases?: string[] | null
+): Promise<void> {
+  const { error } = await supabase
+    .from('watchlist')
+    .insert({ ticker, cik: cik ?? null, aliases: aliases ?? null })
+  if (error) throw error
+}
+
+export async function removeFromWatchlist(ticker: string): Promise<void> {
+  const { error } = await supabase
+    .from('watchlist')
+    .delete()
+    .eq('ticker', ticker)
+  if (error) throw error
+}
+
 export type StockData = {
   ticker: string
   price: number
@@ -81,11 +116,12 @@ export type EventData = {
   metadata: Record<string, unknown>
 }
 
-export async function getStocks(): Promise<StockData[]> {
-  const { data, error } = await supabase
-    .from('stocks')
-    .select('*')
-    .order('ticker', { ascending: true })
+export async function getStocks(tickers?: string[]): Promise<StockData[]> {
+  let query = supabase.from('stocks').select('*').order('ticker', { ascending: true })
+  if (tickers && tickers.length > 0) {
+    query = query.in('ticker', tickers)
+  }
+  const { data, error } = await query
   if (error) throw error
   return (data ?? []).map((row) => ({
     ticker: row.ticker,
