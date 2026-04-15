@@ -4,7 +4,7 @@ import { TrendingDown, TrendingUp } from "lucide-react";
 // Upcoming earnings dates (YYYY-MM-DD). Update each quarter.
 const EARNINGS_DATES: Record<string, string> = {
   META: "2026-04-29",
-  NFLX: "2026-04-15",
+  NFLX: "2026-04-16",
   NVDA: "2026-05-28",
   OXY: "2026-05-05",
 };
@@ -18,7 +18,8 @@ function getEarningsBadge(ticker: string): { label: string; daysLeft: number } |
   const daysLeft = Math.round((earningsDate.getTime() - today.getTime()) / 86400000);
   if (daysLeft < 0 || daysLeft > 30) return null;
   const month = earningsDate.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  return { label: `财报 in ${daysLeft}d · ${month}`, daysLeft };
+  const label = daysLeft === 0 ? `📅 今日财报！` : `财报 in ${daysLeft}d · ${month}`;
+  return { label, daysLeft };
 }
 
 import { fetchEvents, fetchStocks } from "@/lib/server-data";
