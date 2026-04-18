@@ -151,7 +151,7 @@ export function EventsFeed({
       </div>
 
       <div className="divide-y divide-[#D4CCB8]">
-        {allItems.length === 0 && <p className="py-8 font-sans text-sm text-[#5C5C6E]">暂无符合条件的信号</p>}
+        {allItems.length === 0 && <p className="py-8 text-center font-sans text-sm text-[#5C5C6E]">暂无符合条件的信号</p>}
         {allItems.map((event, index) => {
           const metadata = event.metadata ?? {};
           const showExecutive = Boolean(metadata.insiderName && (event.type === "INSIDER_SELL" || event.type === "INSIDER_BUY"));

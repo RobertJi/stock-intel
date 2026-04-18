@@ -1,24 +1,15 @@
 import Link from "next/link";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
-// Upcoming earnings dates (YYYY-MM-DD). Update each quarter.
-const EARNINGS_DATES: Record<string, string> = {
-  META: "2026-04-29",
-  NFLX: "2026-04-16",
-  NVDA: "2026-05-28",
-  OXY: "2026-05-05",
-};
-
-function getEarningsBadge(ticker: string): { label: string; daysLeft: number } | null {
-  const dateStr = EARNINGS_DATES[ticker];
-  if (!dateStr) return null;
+function getEarningsBadge(earningsDate: string | null): { label: string; daysLeft: number } | null {
+  if (!earningsDate) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const earningsDate = new Date(dateStr + "T00:00:00");
-  const daysLeft = Math.round((earningsDate.getTime() - today.getTime()) / 86400000);
+  const ed = new Date(earningsDate + "T00:00:00");
+  const daysLeft = Math.round((ed.getTime() - today.getTime()) / 86400000);
   if (daysLeft < 0 || daysLeft > 30) return null;
-  const month = earningsDate.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  const label = daysLeft === 0 ? `📅 今日财报！` : `财报 in ${daysLeft}d · ${month}`;
+  const month = ed.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  const label = daysLeft === 0 ? "今日财报！" : `财报 in ${daysLeft}d · ${month}`;
   return { label, daysLeft };
 }
 
@@ -104,10 +95,10 @@ export default async function Home() {
                 </span>
               </p>
               {(() => {
-                const badge = getEarningsBadge(stock.ticker);
+                const badge = getEarningsBadge(stock.earningsDate ?? null);
                 if (!badge) return null;
                 return (
-                  <p title="Est. date — update quarterly" className={`mt-2 font-mono text-[10px] ${
+                  <p className={`mt-2 font-mono text-[10px] ${
                     badge.daysLeft <= 3 ? "text-[#B5882B]" : "text-[#5C5C6E]"
                   }`}>
                     📅 {badge.label}

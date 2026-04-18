@@ -61,6 +61,7 @@ export type WatchlistItem = {
   ticker: string
   cik: string | null
   aliases: string[] | null
+  earnings_date: string | null
   added_at: string
 }
 

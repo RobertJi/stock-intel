@@ -154,6 +154,25 @@ def sync_prices():
 
         if rows:
             supa_upsert("stocks", rows, on_conflict="ticker")
+
+        # Update earnings_date in watchlist from yfinance calendar
+        for ticker in WATCHLIST:
+            try:
+                cal = yf.Ticker(ticker).calendar
+                if isinstance(cal, dict) and cal.get("Earnings Date"):
+                    ed_list = cal["Earnings Date"]
+                    ed = ed_list[0] if isinstance(ed_list, list) else ed_list
+                    ed_str = str(ed) if hasattr(ed, 'strftime') else str(ed)[:10]
+                    requests.patch(
+                        f"{SUPABASE_URL}/rest/v1/watchlist?ticker=eq.{ticker}",
+                        headers={**supa_headers(), "Prefer": "return=minimal"},
+                        json={"earnings_date": ed_str},
+                        timeout=10,
+                    )
+                    print(f"  earnings_date {ticker}: {ed_str}")
+            except Exception as e:
+                print(f"  WARN earnings_date {ticker}: {e}", file=sys.stderr)
+
         log_sync("prices", "ok", f"Synced {len(rows)} tickers")
     except Exception as exc:
         log_sync("prices", "error", str(exc))
