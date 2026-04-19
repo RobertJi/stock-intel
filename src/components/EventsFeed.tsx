@@ -121,7 +121,9 @@ export function EventsFeed({
     <div>
       <div className="border-b border-[#D4CCB8] py-4">
         <div className="flex min-w-0 items-center gap-x-2">
-          <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5">
+          <div className="relative min-w-0 flex-1 overflow-hidden">
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#F5F1E8] to-transparent" />
+          <div className="flex gap-2 overflow-x-auto pb-0.5 pr-6">
             {filters.map((filter) => (
               <button
                 key={filter}
@@ -138,6 +140,7 @@ export function EventsFeed({
                 )}
               </button>
             ))}
+          </div>
           </div>
           <button
             onClick={() => setLang((value) => (value === "zh" ? "en" : "zh"))}
