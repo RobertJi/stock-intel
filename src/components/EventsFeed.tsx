@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { ExternalLink, Languages } from "lucide-react";
 
@@ -101,6 +101,8 @@ export function EventsFeed({
 }) {
   const [activeFilter, setActiveFilter] = useState(defaultFilter);
   const [lang, setLang] = useState<"zh" | "en">("zh");
+  const [scrolled, setScrolled] = useState(false);
+  const filterScrollRef = useRef<HTMLDivElement>(null);
 
   const typesPresent = Array.from(new Set(events.map((event) => event.type)));
   const filters = [
@@ -122,8 +124,17 @@ export function EventsFeed({
       <div className="border-b border-[#D4CCB8] py-4">
         <div className="flex min-w-0 items-center gap-x-2">
           <div className="relative min-w-0 flex-1 overflow-hidden">
+            {/* Right fade: always visible */}
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#F5F1E8] to-transparent" />
-          <div className="flex gap-2 overflow-x-auto pb-0.5 pr-6">
+            {/* Left fade: only when scrolled */}
+            {scrolled && (
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#F5F1E8] to-transparent" />
+            )}
+          <div
+            ref={filterScrollRef}
+            className="flex gap-2 overflow-x-auto pb-0.5 pr-6"
+            onScroll={(e) => setScrolled(e.currentTarget.scrollLeft > 4)}
+          >
             {filters.map((filter) => (
               <button
                 key={filter}
