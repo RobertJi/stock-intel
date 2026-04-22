@@ -132,7 +132,7 @@ export function EventsFeed({
             )}
           <div
             ref={filterScrollRef}
-            className="flex gap-2 overflow-x-auto pb-0.5 pr-6"
+            className="flex gap-2 overflow-x-auto pb-2 pr-10"
             onScroll={(e) => setScrolled(e.currentTarget.scrollLeft > 4)}
           >
             {filters.map((filter) => (
