@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Languages } from "lucide-react";
 
@@ -101,8 +101,18 @@ export function EventsFeed({
 }) {
   const [activeFilter, setActiveFilter] = useState(defaultFilter);
   const [lang, setLang] = useState<"zh" | "en">("zh");
-  const [scrolled, setScrolled] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   const filterScrollRef = useRef<HTMLDivElement>(null);
+
+  const updateScrollHints = useCallback(() => {
+    const node = filterScrollRef.current;
+    if (!node) return;
+
+    const maxScrollLeft = node.scrollWidth - node.clientWidth;
+    setCanScrollLeft(node.scrollLeft > 4);
+    setCanScrollRight(maxScrollLeft - node.scrollLeft > 4);
+  }, []);
 
   const typesPresent = Array.from(new Set(events.map((event) => event.type)));
   const filters = [
@@ -119,21 +129,32 @@ export function EventsFeed({
       ? events.filter((event) => event.type !== "INSIDER_SELL")
       : events.filter((event) => event.type === activeFilter);
 
+  useEffect(() => {
+    updateScrollHints();
+
+    const node = filterScrollRef.current;
+    if (!node) return;
+
+    const resizeObserver = new ResizeObserver(updateScrollHints);
+    resizeObserver.observe(node);
+    return () => resizeObserver.disconnect();
+  }, [filters.length, updateScrollHints]);
+
   return (
     <div>
       <div className="border-b border-[#D4CCB8] py-4">
         <div className="flex min-w-0 items-center gap-x-2">
           <div className="relative min-w-0 flex-1 overflow-hidden">
-            {/* Right fade: always visible */}
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#F5F1E8] to-transparent" />
-            {/* Left fade: only when scrolled */}
-            {scrolled && (
+            {canScrollRight && (
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#F5F1E8] to-transparent" />
+            )}
+            {canScrollLeft && (
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#F5F1E8] to-transparent" />
             )}
           <div
             ref={filterScrollRef}
-            className="flex gap-2 overflow-x-auto pb-2 pr-10"
-            onScroll={(e) => setScrolled(e.currentTarget.scrollLeft > 4)}
+            className="flex gap-2 overflow-x-auto pb-2 pr-2 sm:pr-8"
+            onScroll={updateScrollHints}
           >
             {filters.map((filter) => (
               <button
@@ -190,9 +211,9 @@ export function EventsFeed({
                   </Link>
                 )}
               </div>
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-start justify-between gap-3 sm:hidden">
-                  <div className="min-w-0">
+              <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-1">
+                <div className="flex items-start justify-between gap-3 pb-0.5 sm:hidden">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
                     <p className="font-mono text-[11px] text-[#5C5C6E]">{event.date}</p>
                     {event.ticker === "MARKET" ? (
                       <span className="font-mono text-xs font-medium tracking-wider text-[#B5882B]">NEWS</span>
@@ -223,7 +244,7 @@ export function EventsFeed({
                   {localizeTitle(event.title, lang)}
                 </p>
                 {event.description && (
-                  <p className="line-clamp-3 text-xs leading-relaxed text-[#5C5C6E]" style={{ overflowWrap: "break-word" }}>
+                  <p className="line-clamp-2 text-xs leading-relaxed text-[#5C5C6E] sm:line-clamp-3" style={{ overflowWrap: "break-word" }}>
                     {lang === "zh" && event.descriptionZh ? event.descriptionZh : event.description}
                   </p>
                 )}

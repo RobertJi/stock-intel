@@ -17,7 +17,7 @@ export default async function Home() {
   return (
     <div className="max-w-6xl">
       <div className="mb-8 border-b border-[#D4CCB8] pb-4">
-        <div className="flex items-end justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.3em] text-[#B5882B]">
               Market Overview
@@ -27,7 +27,7 @@ export default async function Home() {
             </h1>
           </div>
           {updatedAt && (
-            <p className="font-mono text-[10px] text-[#5C5C6E] pb-1">
+            <p className="font-mono text-[10px] text-[#5C5C6E] sm:pb-1">
               Updated {updatedAt}
             </p>
           )}

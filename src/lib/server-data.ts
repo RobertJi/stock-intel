@@ -2,8 +2,6 @@ import { getEvents, getStocks, getWatchlist } from '@/lib/db'
 
 export type {} // keep file as a module
 
-const WATCHLIST = ['META', 'NFLX', 'NVDA', 'OXY']
-
 export async function fetchStocks() {
   const watchlist = await getWatchlist()
   const tickers = watchlist.map((w) => w.ticker)
