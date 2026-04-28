@@ -153,7 +153,7 @@ export function EventsFeed({
             )}
           <div
             ref={filterScrollRef}
-            className="flex gap-2 overflow-x-auto pb-2 pr-2 sm:pr-8"
+            className="flex gap-2 overflow-x-auto pb-2 pr-2 [scrollbar-width:none] sm:pr-8 [&::-webkit-scrollbar]:hidden"
             onScroll={updateScrollHints}
           >
             {filters.map((filter) => (
