@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Languages } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Languages } from "lucide-react";
 
 const EVENT_LABELS: Record<string, string> = {
   HIDE_INSIDER_SELL: "重大事件",
@@ -71,6 +71,24 @@ const IMPACT_DOT: Record<string, string> = {
   NEUTRAL: "bg-[#5C5C6E]",
 };
 
+const IMPACT_SUMMARY = {
+  BULLISH: {
+    label: "今日最强利多",
+    tone: "border-[#1B4332]/25 bg-[#1B4332]/[0.06] text-[#1B4332]",
+    badge: "bg-[#1B4332]/15 text-[#1B4332]",
+  },
+  BEARISH: {
+    label: "今日最强利空",
+    tone: "border-[#7C1D1D]/25 bg-[#7C1D1D]/[0.06] text-[#7C1D1D]",
+    badge: "bg-[#7C1D1D]/15 text-[#7C1D1D]",
+  },
+  NEUTRAL: {
+    label: "需观察",
+    tone: "border-[#B5882B]/30 bg-[#B5882B]/[0.07] text-[#8A681F]",
+    badge: "bg-[#B5882B]/15 text-[#8A681F]",
+  },
+} as const;
+
 type EventMetadata = {
   insiderName?: string;
   insiderTitle?: string;
@@ -114,6 +132,13 @@ export function EventsFeed({
     setCanScrollRight(maxScrollLeft - node.scrollLeft > 4);
   }, []);
 
+  const scrollFilters = useCallback((direction: "left" | "right") => {
+    const node = filterScrollRef.current;
+    if (!node) return;
+
+    node.scrollBy({ left: direction === "left" ? -180 : 180, behavior: "smooth" });
+  }, []);
+
   const typesPresent = Array.from(new Set(events.map((event) => event.type)));
   const filters = [
     "HIDE_INSIDER_SELL",
@@ -129,6 +154,12 @@ export function EventsFeed({
       ? events.filter((event) => event.type !== "INSIDER_SELL")
       : events.filter((event) => event.type === activeFilter);
 
+  const summarySource = events.filter((event) => event.type !== "INSIDER_SELL");
+  const summaryItems = (["BULLISH", "BEARISH", "NEUTRAL"] as const).map((impact) => {
+    const item = summarySource.find((event) => event.impact === impact) ?? null;
+    return { impact, item, config: IMPACT_SUMMARY[impact] };
+  });
+
   useEffect(() => {
     updateScrollHints();
 
@@ -142,14 +173,58 @@ export function EventsFeed({
 
   return (
     <div>
+      <div className="grid gap-3 border-b border-[#D4CCB8] py-4 sm:grid-cols-3">
+        {summaryItems.map(({ impact, item, config }) => (
+          <div key={impact} className={`rounded-lg border px-3 py-3 ${config.tone}`}>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em]">{config.label}</p>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${config.badge}`}>
+                {impact === "BULLISH" ? "多" : impact === "BEARISH" ? "空" : "观察"}
+              </span>
+            </div>
+            {item ? (
+              <div className="min-w-0 space-y-1">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="shrink-0 font-mono text-xs font-semibold tracking-wider">{item.ticker === "MARKET" ? "NEWS" : item.ticker}</span>
+                  <span className="truncate text-xs text-[#5C5C6E]">{EVENT_LABELS[item.type] ?? item.type}</span>
+                </div>
+                <p className="line-clamp-2 text-xs leading-relaxed text-[#1A1A2E]">
+                  {lang === "zh" && item.descriptionZh ? item.descriptionZh : item.description || localizeTitle(item.title, lang)}
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-[#5C5C6E]">暂无明显信号</p>
+            )}
+          </div>
+        ))}
+      </div>
+
       <div className="border-b border-[#D4CCB8] py-4">
         <div className="flex min-w-0 items-center gap-x-2">
           <div className="relative min-w-0 flex-1 overflow-hidden">
             {canScrollRight && (
-              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#F5F1E8] to-transparent" />
+              <>
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#F5F1E8] to-transparent" />
+                <button
+                  onClick={() => scrollFilters("right")}
+                  className="absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-[#D4CCB8] bg-[#F5F1E8]/95 p-1 text-[#5C5C6E] shadow-sm transition-colors hover:text-[#1A1A2E] sm:block"
+                  aria-label="向右查看更多筛选"
+                >
+                  <ChevronRight className="size-3.5" />
+                </button>
+              </>
             )}
             {canScrollLeft && (
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#F5F1E8] to-transparent" />
+              <>
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[#F5F1E8] to-transparent" />
+                <button
+                  onClick={() => scrollFilters("left")}
+                  className="absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-[#D4CCB8] bg-[#F5F1E8]/95 p-1 text-[#5C5C6E] shadow-sm transition-colors hover:text-[#1A1A2E] sm:block"
+                  aria-label="向左查看更多筛选"
+                >
+                  <ChevronLeft className="size-3.5" />
+                </button>
+              </>
             )}
           <div
             ref={filterScrollRef}
@@ -237,7 +312,7 @@ export function EventsFeed({
                     <span className="rounded-full bg-[#EDE8DE] px-2 py-1 font-mono uppercase tracking-[0.18em] text-[10px] text-[#B5882B]">
                       {metadata.insiderName}
                     </span>
-                    {metadata.insiderTitle && <span className="text-[11px]">{metadata.insiderTitle}</span>}
+                    {metadata.insiderTitle && <span className="min-w-0 break-words text-[11px]">{metadata.insiderTitle}</span>}
                   </div>
                 )}
                 <p className="break-words font-medium text-sm leading-snug text-[#1A1A2E]">
@@ -251,7 +326,7 @@ export function EventsFeed({
               </div>
               <div className="flex shrink-0 flex-col items-end gap-2 pt-0.5">
                 <span
-                  className={`rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${
+                  className={`hidden rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider sm:inline-flex ${
                     event.impact === "BULLISH"
                       ? "bg-[#1B4332]/15 text-[#1B4332]"
                       : event.impact === "BEARISH"
