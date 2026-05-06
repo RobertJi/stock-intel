@@ -15,6 +15,13 @@ const EXECUTIVE_AVATARS: Record<string, string> = {
   "robertson donald f jr": "/executives/donald-robertson.webp",
   "aarti shah": "/executives/aarti-shah.webp",
   "shah aarti s.": "/executives/aarti-shah.webp",
+  "reed hastings": "/executives/reed-hastings.webp",
+  "hastings reed": "/executives/reed-hastings.webp",
+  "spencer neumann": "/executives/spencer-neumann.webp",
+  "neumann spencer adam": "/executives/spencer-neumann.webp",
+  "mark stevens": "/executives/mark-stevens.webp",
+  "mark a stevens": "/executives/mark-stevens.webp",
+  "stevens mark a": "/executives/mark-stevens.webp",
   "john dabiri": "/executives/john-dabiri.webp",
   "dabiri john": "/executives/john-dabiri.webp",
 };
