@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { BarChart3, TrendingDown, Users } from "lucide-react";
 
 import { EventsFeed } from "@/components/EventsFeed";
 import { StockChart, type InsiderTrade } from "@/components/StockChart";
+import { getExecutiveAvatar } from "@/lib/executive-avatars";
 import type { EventData, StockData } from "@/lib/server-data";
 
 type ExecutiveInsightsProps = {
@@ -21,6 +23,7 @@ type ExecutiveSummary = {
   totalValue: number;
   latestDate: string;
   avatar: string;
+  avatarUrl: string | null;
 };
 
 const RANGE_OPTIONS = [
@@ -119,6 +122,7 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
         totalValue: 0,
         latestDate: trade.date,
         avatar: initialsForName(trade.insiderName),
+        avatarUrl: getExecutiveAvatar(trade.insiderName),
       };
 
       current.sellCount += 1;
@@ -286,10 +290,26 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`flex size-12 shrink-0 items-center justify-center rounded-full font-mono text-sm ${
-                    isActive ? "bg-[#B5882B] text-[#1A1A2E]" : "bg-[#E3D8C2] text-[#1A1A2E]"
-                  }`}>
-                    {executive.avatar}
+                  <div
+                    className={`flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 bg-white font-mono text-sm ${
+                      isActive
+                        ? "border-[#B5882B] text-[#1A1A2E]"
+                        : "border-white text-[#1A1A2E] shadow-sm ring-1 ring-[#D4CCB8]"
+                    }`}
+                  >
+                    {executive.avatarUrl ? (
+                      <Image
+                        src={executive.avatarUrl}
+                        alt={`${executive.name} 头像`}
+                        width={48}
+                        height={48}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <span className={isActive ? "text-[#F5F0E8]" : "text-[#1A1A2E]"}>
+                        {executive.avatar}
+                      </span>
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-display text-xl">{executive.name}</p>
