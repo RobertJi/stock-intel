@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ExternalLink, Languages } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Languages, MoveHorizontal } from "lucide-react";
 
 const EVENT_LABELS: Record<string, string> = {
   HIDE_INSIDER_SELL: "重大事件",
@@ -207,7 +207,7 @@ export function EventsFeed({
                 <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#F5F1E8] to-transparent" />
                 <button
                   onClick={() => scrollFilters("right")}
-                  className="absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-[#D4CCB8] bg-[#F5F1E8]/95 p-1 text-[#5C5C6E] shadow-sm transition-colors hover:text-[#1A1A2E] sm:block"
+                  className="absolute right-0 top-1/2 z-20 -translate-y-1/2 rounded-full border border-[#D4CCB8] bg-[#F5F1E8]/95 p-1 text-[#5C5C6E] shadow-sm transition-colors hover:text-[#1A1A2E]"
                   aria-label="向右查看更多筛选"
                 >
                   <ChevronRight className="size-3.5" />
@@ -219,7 +219,7 @@ export function EventsFeed({
                 <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[#F5F1E8] to-transparent" />
                 <button
                   onClick={() => scrollFilters("left")}
-                  className="absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-[#D4CCB8] bg-[#F5F1E8]/95 p-1 text-[#5C5C6E] shadow-sm transition-colors hover:text-[#1A1A2E] sm:block"
+                  className="absolute left-0 top-1/2 z-20 -translate-y-1/2 rounded-full border border-[#D4CCB8] bg-[#F5F1E8]/95 p-1 text-[#5C5C6E] shadow-sm transition-colors hover:text-[#1A1A2E]"
                   aria-label="向左查看更多筛选"
                 >
                   <ChevronLeft className="size-3.5" />
@@ -228,7 +228,7 @@ export function EventsFeed({
             )}
           <div
             ref={filterScrollRef}
-            className="flex gap-2 overflow-x-auto pb-2 pr-2 [scrollbar-width:none] sm:pr-8 [&::-webkit-scrollbar]:hidden"
+            className="flex gap-2 overflow-x-auto pb-3 pr-9 [scrollbar-width:thin] [scrollbar-color:#D4CCB8_transparent] sm:pr-8 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#D4CCB8] [&::-webkit-scrollbar-track]:bg-transparent"
             onScroll={updateScrollHints}
           >
             {filters.map((filter) => (
@@ -247,6 +247,12 @@ export function EventsFeed({
                 )}
               </button>
             ))}
+            {canScrollRight && (
+              <div className="pointer-events-none mt-1 flex items-center justify-end gap-1 pr-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[#B5882B] sm:hidden">
+                <MoveHorizontal className="size-3" />
+                Swipe
+              </div>
+            )}
           </div>
           </div>
           <button
@@ -261,7 +267,14 @@ export function EventsFeed({
       </div>
 
       <div className="divide-y divide-[#D4CCB8]">
-        {allItems.length === 0 && <p className="py-8 text-center font-sans text-sm text-[#5C5C6E]">暂无符合条件的信号</p>}
+        {allItems.length === 0 && (
+          <div className="px-4 py-10 text-center">
+            <p className="font-display text-xl text-[#1A1A2E]">暂无符合条件的信号</p>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-[#5C5C6E]">
+              试试切换上方筛选，或等待下一轮事件同步后刷新。
+            </p>
+          </div>
+        )}
         {allItems.map((event, index) => {
           const metadata = event.metadata ?? {};
           const showExecutive = Boolean(metadata.insiderName && (event.type === "INSIDER_SELL" || event.type === "INSIDER_BUY"));
