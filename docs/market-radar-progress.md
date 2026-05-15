@@ -1,6 +1,6 @@
 # Signal Market Radar Progress
 
-Last updated: 2026-05-15
+Last updated: 2026-05-15 13:35 UTC
 
 This document tracks implementation progress for the Market Radar work described in docs/market-radar-design.md.
 
@@ -19,7 +19,7 @@ The first real run processed existing Signal events into the new intelligence la
 - 3 opportunities
 - 15 opportunity_insights
 
-The UI has not been upgraded yet. The homepage still shows the existing watchlist and events/news surface.
+The first visible UI slice has been added. The homepage now shows Today's Opportunities above the existing watchlist and events/news surface.
 
 ## Completed Work
 
@@ -219,13 +219,17 @@ Remaining:
 
 ### MVP 2: Radar UI
 
-Status: not started
+Status: first visible slice completed
 
-Next recommended step:
+Completed:
 
-- Add a homepage Today's Opportunities section that reads from opportunities.
+- Added getOpportunities() to src/lib/db.ts.
+- Added fetchOpportunities() to src/lib/server-data.ts.
+- Added src/components/OpportunityRadar.tsx.
+- Added Today's Opportunities above the existing watchlist on the homepage.
+- Verified desktop and mobile rendering locally.
 
-Initial UI scope:
+Current UI scope:
 
 - Show opportunity title, ticker, direction, score, confidence, why_now, top evidence, and main risk.
 - Keep current Watchlist and Events & News sections below it.
@@ -237,6 +241,13 @@ Suggested files:
 - src/lib/server-data.ts
 - src/components/OpportunityRadar.tsx
 - src/app/page.tsx
+
+Remaining:
+
+- Add opportunity detail page.
+- Add clickable drill-down from each opportunity to evidence.
+- Add theme-level opportunities once theme_signals is populated.
+- Improve wording once the engine generates stronger directional opportunities.
 
 ### MVP 3: Manual Thesis
 
@@ -269,17 +280,14 @@ Planned scope:
 
 ## Recommended Next Step
 
-Build MVP 2's first visible slice:
+Build the next MVP 2 slice:
 
-1. Add getOpportunities() to src/lib/db.ts.
-2. Expose it through src/lib/server-data.ts.
-3. Create OpportunityRadar component.
-4. Put Today's Opportunities above the existing watchlist on the homepage.
-5. Build and deploy.
+1. Add an opportunity detail page.
+2. Link opportunity cards to the detail page.
+3. Show evidence_chain, score_breakdown, risks, invalidation_condition, and next_watch_items.
+4. Add a basic outcome placeholder section.
 
 Why this next:
 
-- The data layer already has real opportunities.
-- The product will not feel like Market Radar until opportunities are visible in the UI.
-- A small homepage section gives immediate feedback without forcing a full redesign.
-
+- The homepage now proves the radar surface.
+- The next value is inspectability: the user should be able to open an opportunity and see why it exists.

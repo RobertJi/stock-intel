@@ -1,4 +1,4 @@
-import { getEvents, getStocks, getWatchlist } from '@/lib/db'
+import { getEvents, getOpportunities, getStocks, getWatchlist } from '@/lib/db'
 
 export type {} // keep file as a module
 
@@ -18,5 +18,10 @@ export async function fetchEvents(ticker?: string, limit = 50) {
   return getEvents(ticker, limit)
 }
 
+export async function fetchOpportunities(limit = 6) {
+  return getOpportunities(limit)
+}
+
 export type StockData = Awaited<ReturnType<typeof getStocks>>[number]
 export type EventData = Awaited<ReturnType<typeof getEvents>>[number]
+export type OpportunityData = Awaited<ReturnType<typeof getOpportunities>>[number]

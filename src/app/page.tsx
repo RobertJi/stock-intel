@@ -1,17 +1,26 @@
-import { fetchEvents, fetchStocks } from "@/lib/server-data";
+import { fetchEvents, fetchOpportunities, fetchStocks } from "@/lib/server-data";
 import { EventsFeed } from "@/components/EventsFeed";
+import { OpportunityRadar } from "@/components/OpportunityRadar";
 import { StockGrid } from "@/components/StockGrid";
 import { AlertTriangle, DatabaseZap } from "lucide-react";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [stocksResult, eventsResult] = await Promise.allSettled([fetchStocks(), fetchEvents()]);
+  const [stocksResult, eventsResult, opportunitiesResult] = await Promise.allSettled([
+    fetchStocks(),
+    fetchEvents(),
+    fetchOpportunities(),
+  ]);
 
   const stocks = stocksResult.status === "fulfilled" ? stocksResult.value : [];
   const events = eventsResult.status === "fulfilled" ? eventsResult.value : [];
-  const hasDataError = stocksResult.status === "rejected" || eventsResult.status === "rejected";
-  const isEmpty = stocks.length === 0 && events.length === 0;
+  const opportunities = opportunitiesResult.status === "fulfilled" ? opportunitiesResult.value : [];
+  const hasDataError =
+    stocksResult.status === "rejected" ||
+    eventsResult.status === "rejected" ||
+    opportunitiesResult.status === "rejected";
+  const isEmpty = stocks.length === 0 && events.length === 0 && opportunities.length === 0;
 
   // Price freshness: use updatedAt from first stock
   const updatedAt = stocks[0]?.updatedAt
@@ -63,7 +72,10 @@ export default async function Home() {
           </p>
         </div>
       ) : (
-        <StockGrid initialStocks={stocks} />
+        <>
+          <OpportunityRadar opportunities={opportunities} />
+          <StockGrid initialStocks={stocks} />
+        </>
       )}
 
       <div className="border-t border-[#D4CCB8]">

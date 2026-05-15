@@ -117,6 +117,37 @@ export type EventData = {
   metadata: Record<string, unknown>
 }
 
+export type OpportunityEvidence = {
+  insight_id?: string
+  title?: string
+  summary?: string
+  impact_score?: number
+  confidence?: number
+}
+
+export type OpportunityData = {
+  id: string
+  title: string
+  opportunityType: string
+  status: string
+  direction: 'bullish' | 'bearish' | 'watch'
+  ticker: string | null
+  sector: string | null
+  score: number
+  scoreBreakdown: Record<string, number>
+  confidence: number
+  timeHorizon: string
+  whyNow: string | null
+  evidenceChain: OpportunityEvidence[]
+  catalysts: string[]
+  risks: string[]
+  invalidationCondition: string | null
+  nextWatchItems: string[]
+  generatedAt: string
+  lastReviewedAt: string | null
+  metadata: Record<string, unknown>
+}
+
 export async function getStocks(tickers?: string[]): Promise<StockData[]> {
   let query = supabase.from('stocks').select('*').order('ticker', { ascending: true })
   if (tickers && tickers.length > 0) {
@@ -213,6 +244,39 @@ export async function getEvents(ticker?: string, limit = 50): Promise<EventData[
   if (newsResult.error) throw newsResult.error
 
   return [...(secResult.data ?? []).map(mapRow), ...(newsResult.data ?? []).map(mapRow)]
+}
+
+export async function getOpportunities(limit = 6): Promise<OpportunityData[]> {
+  const { data, error } = await supabase
+    .from('opportunities')
+    .select('*')
+    .order('score', { ascending: false })
+    .order('generated_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    title: row.title as string,
+    opportunityType: row.opportunity_type as string,
+    status: row.status as string,
+    direction: (row.direction as 'bullish' | 'bearish' | 'watch') ?? 'watch',
+    ticker: (row.ticker as string) ?? null,
+    sector: (row.sector as string) ?? null,
+    score: Number(row.score ?? 0),
+    scoreBreakdown: (row.score_breakdown as Record<string, number>) ?? {},
+    confidence: Number(row.confidence ?? 0),
+    timeHorizon: (row.time_horizon as string) ?? 'days',
+    whyNow: (row.why_now as string) ?? null,
+    evidenceChain: (row.evidence_chain as OpportunityEvidence[]) ?? [],
+    catalysts: (row.catalysts as string[]) ?? [],
+    risks: (row.risks as string[]) ?? [],
+    invalidationCondition: (row.invalidation_condition as string) ?? null,
+    nextWatchItems: (row.next_watch_items as string[]) ?? [],
+    generatedAt: row.generated_at as string,
+    lastReviewedAt: (row.last_reviewed_at as string) ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+  }))
 }
 
 export async function isStockFresh(ticker: string, maxAgeSeconds = 60): Promise<boolean> {
