@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Sync mode (all/prices/events/form4/news)'
+        description: 'Sync mode (all/prices/events/form4/news/opportunities)'
         required: false
         default: 'all'
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Background sync: fetch stock prices and SEC events, write to Supabase."""
+"""Background sync: fetch stock prices, events, and market radar opportunities."""
 
 import json
 import os
@@ -293,6 +293,23 @@ def sync_news():
     print(f"  News sync done: {len(rows)} articles")
 
 
+def sync_opportunities():
+    import importlib.util, os as _os
+    spec = importlib.util.spec_from_file_location(
+        "opportunity_engine", _os.path.join(_os.path.dirname(__file__), "opportunity_engine.py")
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    result = mod.run(limit=160)
+    print(
+        "  Opportunities sync done: "
+        f"{result['source_items']} source items, "
+        f"{result['insights']} insights, "
+        f"{result['opportunities']} opportunities"
+    )
+
+
 if __name__ == "__main__":
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         print("ERROR: SUPABASE_URL and SUPABASE_SERVICE_KEY must be set", file=sys.stderr)
@@ -311,4 +328,7 @@ if __name__ == "__main__":
     if mode in ("all", "news"):
         print("Syncing market news...")
         sync_news()
+    if mode in ("opportunities", "radar"):
+        print("Syncing market radar opportunities...")
+        sync_opportunities()
     print("Done.")
