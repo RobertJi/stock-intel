@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 const nav = [
-  { label: "Dashboard", href: "/" },
-  { label: "Watchlist", href: "/" },
-  { label: "Events", href: "/" },
+  { label: "Radar", href: "/" },
+  { label: "Opportunities", href: "/" },
+  { label: "Information", href: "/" },
 ];
 
 export function Sidebar() {

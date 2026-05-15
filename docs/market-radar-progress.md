@@ -1,6 +1,6 @@
 # Signal Market Radar Progress
 
-Last updated: 2026-05-15 13:35 UTC
+Last updated: 2026-05-15 15:10 UTC
 
 This document tracks implementation progress for the Market Radar work described in docs/market-radar-design.md.
 
@@ -19,7 +19,7 @@ The first real run processed existing Signal events into the new intelligence la
 - 3 opportunities
 - 15 opportunity_insights
 
-The first visible UI slice has been added. The homepage now shows Today's Opportunities above the existing watchlist and events/news surface.
+The first visible UI slice has been added. The homepage now prioritizes Market Radar: opportunities first, information stream second. The old stock card grid has been removed from the homepage because individual tickers should be secondary detail inside opportunity or theme flows.
 
 ## Completed Work
 
@@ -228,11 +228,15 @@ Completed:
 - Added src/components/OpportunityRadar.tsx.
 - Added Today's Opportunities above the existing watchlist on the homepage.
 - Verified desktop and mobile rendering locally.
+- Repositioned the homepage away from watchlist-first UX.
+- Removed the stock card grid from the homepage.
+- Renamed the main homepage surface to Market Radar and the event area to Information Stream.
 
 Current UI scope:
 
 - Show opportunity title, ticker, direction, score, confidence, why_now, top evidence, and main risk.
-- Keep current Watchlist and Events & News sections below it.
+- Keep individual stock information out of the homepage.
+- Use events/news as an information stream, not as the main product surface.
 - Do not redesign the entire app yet.
 
 Suggested files:
