@@ -104,4 +104,28 @@ Do not run the scanner from cron until the coding backend layer is connected. Ot
 
 ## Next Step
 
-The next harness layer should call a coding backend from the prepared worktree using .agent-run/prompt.md, then commit, push, and open a PR.
+## Executing A Prepared Worktree
+
+After a worktree has been prepared, run the executor:
+
+~~~bash
+python3 scripts/agent_issue_executor.py ~/dev/worktrees/stock-intel/issue-<number>
+~~~
+
+By default it uses Codex as the coding backend. To publish the result:
+
+~~~bash
+python3 scripts/agent_issue_executor.py ~/dev/worktrees/stock-intel/issue-<number> --commit --push --pr
+~~~
+
+For deterministic smoke tests, use the command backend:
+
+~~~bash
+python3 scripts/agent_issue_executor.py ~/dev/worktrees/stock-intel/issue-<number> --backend command --command "npm run lint" 
+~~~
+
+The executor refuses to publish forbidden files such as .env files, data files, __pycache__, and pyc files.
+
+## Next Step
+
+The next harness layer should wire scanner -> runner -> executor into a controlled cron job, then add a CI failure repair loop.
