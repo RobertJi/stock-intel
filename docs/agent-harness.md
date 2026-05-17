@@ -129,3 +129,7 @@ The executor refuses to publish forbidden files such as .env files, data files, 
 ## Next Step
 
 The next harness layer should wire scanner -> runner -> executor into a controlled cron job, then add a CI failure repair loop.
+## Phase 4 Smoke Test
+
+- 2026-05-17: executor smoke test confirmed scanner -> runner -> executor -> PR publication flow.
+
