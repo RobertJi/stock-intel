@@ -11,7 +11,7 @@ Phase 1 is complete:
 - Agent labels exist in GitHub.
 - main is branch-protected and requires Web checks.
 
-Phase 2 adds the local worktree runner.
+Phase 2 adds the local worktree runner. Phase 3 adds the scanner that finds ready issues and optionally calls the runner.
 
 ## Labels
 
@@ -71,6 +71,36 @@ python3 scripts/agent_issue_runner.py <issue-number> --no-require-ready-label
 ~~~
 
 Do not use this mode in the cron scanner. Automated pickup must require agent-ready.
+
+## Next Step
+
+## Scanning Ready Issues
+
+List candidate issues without mutating anything:
+
+~~~bash
+python3 scripts/agent_issue_scanner.py
+~~~
+
+Preview scanner-to-runner execution:
+
+~~~bash
+python3 scripts/agent_issue_scanner.py --prepare --claim --dry-run
+~~~
+
+Actually prepare and claim one issue:
+
+~~~bash
+python3 scripts/agent_issue_scanner.py --prepare --claim
+~~~
+
+The scanner defaults to one issue per run. Increase cautiously:
+
+~~~bash
+python3 scripts/agent_issue_scanner.py --prepare --claim --max-issues 2
+~~~
+
+Do not run the scanner from cron until the coding backend layer is connected. Otherwise issues will be claimed and prepared, but no agent will actually write code.
 
 ## Next Step
 

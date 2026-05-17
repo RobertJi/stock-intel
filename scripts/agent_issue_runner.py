@@ -236,7 +236,8 @@ def prepare(config: RunnerConfig) -> dict[str, Any]:
     branch = f"agent/issue-{config.issue}-{title_slug}"
     worktree_path = (config.worktrees_dir / f"issue-{config.issue}").resolve()
 
-    ensure_clean_repo(config.repo_root)
+    if not config.dry_run:
+        ensure_clean_repo(config.repo_root)
     ensure_branch_available(config, branch, worktree_path)
 
     run(["git", "fetch", config.remote, config.base], cwd=config.repo_root, dry_run=config.dry_run)
