@@ -39,7 +39,7 @@ jobs:
         run: npm run lint
 
       - name: Check Python scripts
-        run: python3 -m py_compile scripts/agent_issue_runner.py scripts/agent_issue_scanner.py
+        run: python3 -m py_compile scripts/agent_issue_runner.py scripts/agent_issue_scanner.py scripts/agent_issue_executor.py
 
       - name: Build
         run: npm run build
