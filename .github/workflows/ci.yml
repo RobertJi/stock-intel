@@ -17,6 +17,10 @@ jobs:
   web:
     name: Web checks
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      SETTINGS_PASSWORD: ci-placeholder-password
 
     steps:
       - name: Checkout
@@ -36,4 +40,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
