@@ -23,6 +23,9 @@ FORBIDDEN_PATTERNS = [
     "*.pyc",
 ]
 
+WORKING_LABEL = "agent-working"
+PR_OPENED_LABEL = "agent-pr-opened"
+
 
 @dataclass(frozen=True)
 class ExecutorConfig:
@@ -237,6 +240,35 @@ Closes #{state['issue']}
     return proc.stdout.strip() if proc.stdout else None
 
 
+def mark_pr_opened(config: ExecutorConfig, state: dict[str, Any], pr_url: str) -> None:
+    body = (
+        "Agent executor opened a pull request.\n\n"
+        f"- PR: {pr_url}\n"
+        f"- Branch: {state['branch']}"
+    )
+    run(
+        [
+            "gh",
+            "issue",
+            "edit",
+            str(state["issue"]),
+            "--repo",
+            state["repo"],
+            "--remove-label",
+            WORKING_LABEL,
+            "--add-label",
+            PR_OPENED_LABEL,
+        ],
+        cwd=config.worktree,
+        dry_run=config.dry_run,
+    )
+    run(
+        ["gh", "issue", "comment", str(state["issue"]), "--repo", state["repo"], "--body", body],
+        cwd=config.worktree,
+        dry_run=config.dry_run,
+    )
+
+
 def update_state(worktree: Path, updates: dict[str, Any]) -> None:
     state_path = worktree / ".agent-run" / "state.json"
     state = load_json(state_path)
@@ -264,6 +296,8 @@ def execute(config: ExecutorConfig) -> dict[str, Any]:
         push_branch(config, state)
     if files and config.pr:
         pr_url = create_pr(config, state, issue, files)
+        if pr_url:
+            mark_pr_opened(config, state, pr_url)
 
     status = "pr_opened" if pr_url else ("committed" if commit_sha else "executed")
     if not files:
