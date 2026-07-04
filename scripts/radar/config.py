@@ -31,6 +31,7 @@ THESIS_EXPIRE_DAYS = 7
 # 分诊批大小 / 推理单次上限(控制成本)
 TRIAGE_BATCH = 25
 REASON_MAX_PER_RUN = 30
+REASON_CHUNK = 8  # 每次 LLM 调用处理的信号数,过大会导致输出 JSON 被 max_tokens 截断
 
 # 板块新闻订阅关键词(Google News RSS query)。新增板块只需加一行。
 NEWS_TOPICS: dict[str, str] = {

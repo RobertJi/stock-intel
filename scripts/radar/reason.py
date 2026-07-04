@@ -12,7 +12,7 @@ SYSTEM = """你是市场传导链分析师。给定一批新信号和当前活�
 2. 传导链:一步步因果(如 "DRAM合约价+10% → 存储原厂毛利改善 → 存储板块盈利上修")
 3. 证据强度 weight 0-100(独家硬数据高分,模糊传闻低分)
 4. 归属:若与某活跃论点是同一判断,给出其 thesis_id;否则 thesis_id 为 null(新建)
-5. 新建论点时给出 sector_zh、summary、confirm_conditions、invalidate_conditions、以及各市场(US/HK/CN/JP/KR)可表达该判断的标的 instruments
+5. 新建论点时给出 sector_zh、summary、confirm_conditions、invalidate_conditions、以及各市场(US/HK/CN/JP/KR)可表达该判断的标的 instruments(每个市场最多 2 个,保持输出紧凑)
 
 只输出 JSON 数组,每项:
 {"signal_idx": <编号>, "impacts": [{"sector": "...", "sector_zh": "...", "direction": "bullish", "thesis_id": null 或 "uuid",
@@ -42,33 +42,49 @@ def run(dry_run: bool = False, mock: dict[str, Any] | None = None) -> list[dict[
         print("reason: nothing to process")
         return []
 
-    thesis_ctx = json.dumps(
-        [{k: t[k] for k in ("id", "sector", "direction", "summary")} for t in theses],
-        ensure_ascii=False,
-    )
-    signal_lines = [
-        f'{i}. [{s["source_kind"]}] {s["title"]}\n   {(s.get("content") or "")[:300]}'
-        for i, s in enumerate(signals)
-    ]
-    user = f"当前活跃论点:\n{thesis_ctx}\n\n新信号:\n" + "\n".join(signal_lines)
-    analyses = llm.chat_json(config.REASON_MODEL, SYSTEM, user, max_tokens=8000)
-
-    if dry_run:
-        print(json.dumps(analyses, ensure_ascii=False, indent=2))
-        return analyses
-
-    by_idx = {a.get("signal_idx"): a for a in analyses if isinstance(a, dict)}
     known_thesis_ids = {t["id"] for t in theses}
-    for i, sig in enumerate(signals):
-        analysis = by_idx.get(i, {"impacts": []})
+    all_analyses: list[dict[str, Any]] = []
+    chunk_size = config.REASON_CHUNK
+    for start in range(0, len(signals), chunk_size):
+        chunk = signals[start : start + chunk_size]
+        # 每个分块都重新取论点上下文,分块间新建的论点也能被归属
+        thesis_ctx = json.dumps(
+            [{k: t[k] for k in ("id", "sector", "direction", "summary")} for t in theses],
+            ensure_ascii=False,
+        )
+        signal_lines = [
+            f'{i}. [{s["source_kind"]}] {s["title"]}\n   {(s.get("content") or "")[:300]}'
+            for i, s in enumerate(chunk)
+        ]
+        user = f"当前活跃论点:\n{thesis_ctx}\n\n新信号:\n" + "\n".join(signal_lines)
         try:
-            _apply(sig, analysis.get("impacts") or [], known_thesis_ids)
-            db.update("radar_signals", f"id=eq.{sig['id']}", {"reason_status": "done"})
+            analyses = llm.chat_json(config.REASON_MODEL, SYSTEM, user, max_tokens=8000)
         except Exception as e:  # noqa: BLE001
-            print(f"  reason apply failed for {sig['id']}: {e}")
-            db.update("radar_signals", f"id=eq.{sig['id']}", {"reason_status": "failed"})
+            print(f"  reason chunk failed ({start}-{start + len(chunk)}): {e}")
+            continue
+        all_analyses.extend(a for a in analyses if isinstance(a, dict))
+
+        if dry_run:
+            print(json.dumps(analyses, ensure_ascii=False, indent=2))
+            continue
+
+        by_idx = {a.get("signal_idx"): a for a in analyses if isinstance(a, dict)}
+        for i, sig in enumerate(chunk):
+            analysis = by_idx.get(i, {"impacts": []})
+            try:
+                _apply(sig, analysis.get("impacts") or [], known_thesis_ids)
+                db.update("radar_signals", f"id=eq.{sig['id']}", {"reason_status": "done"})
+            except Exception as e:  # noqa: BLE001
+                print(f"  reason apply failed for {sig['id']}: {e}")
+                db.update("radar_signals", f"id=eq.{sig['id']}", {"reason_status": "failed"})
+        if not dry_run:
+            theses = db.get(
+                "sector_theses",
+                "select=id,sector,sector_zh,direction,summary,conviction&status=in.(forming,active,confirmed)",
+            )
+            known_thesis_ids = {t["id"] for t in theses}
     print(f"reason: {len(signals)} signals processed")
-    return analyses
+    return all_analyses
 
 
 def _apply(sig: dict[str, Any], impacts: list[dict[str, Any]], known_thesis_ids: set[str]) -> None:
