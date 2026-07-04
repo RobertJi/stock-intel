@@ -6,10 +6,18 @@ SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN", "")
 
-# 便宜模型做分诊,强模型做传导链推理
-TRIAGE_MODEL = os.environ.get("RADAR_TRIAGE_MODEL", "google/gemini-2.5-flash")
-REASON_MODEL = os.environ.get("RADAR_REASON_MODEL", "anthropic/claude-sonnet-4.5")
+# 设置了 REPLICATE_API_TOKEN 则优先走 Replicate,否则 OpenRouter
+LLM_PROVIDER = os.environ.get("RADAR_LLM_PROVIDER") or ("replicate" if REPLICATE_API_TOKEN else "openrouter")
+
+# 便宜模型做分诊,强模型做传导链推理(注意两家的模型 ID 命名不同)
+_DEFAULT_MODELS = {
+    "replicate": ("anthropic/claude-4.5-haiku", "anthropic/claude-4.5-sonnet"),
+    "openrouter": ("anthropic/claude-haiku-4.5", "anthropic/claude-sonnet-4.5"),
+}
+TRIAGE_MODEL = os.environ.get("RADAR_TRIAGE_MODEL", _DEFAULT_MODELS[LLM_PROVIDER][0])
+REASON_MODEL = os.environ.get("RADAR_REASON_MODEL", _DEFAULT_MODELS[LLM_PROVIDER][1])
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
