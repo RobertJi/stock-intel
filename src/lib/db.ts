@@ -306,3 +306,86 @@ export async function isSyncFresh(type: string, maxAgeSeconds: number): Promise<
   if (!data) return false
   return Date.now() / 1000 - data.ran_at < maxAgeSeconds
 }
+
+export type ThesisEvidence = {
+  weight: number
+  stance: 'supports' | 'weakens'
+  reasoning: string | null
+  created_at: string
+  signal: {
+    title: string
+    url: string | null
+    source_kind: string
+    published_at: string | null
+  } | null
+}
+
+export type MarketReactionEntry = {
+  symbol: string
+  name: string | null
+  pct_5d: number
+}
+
+export type ThesisData = {
+  id: string
+  sector: string
+  sectorZh: string | null
+  direction: 'bullish' | 'bearish'
+  status: string
+  conviction: number
+  convictionComponents: Record<string, number>
+  summary: string | null
+  transmission: string | null
+  confirmConditions: string[]
+  invalidateConditions: string[]
+  marketReaction: Record<string, MarketReactionEntry[] | number>
+  evidence: ThesisEvidence[]
+  firstSignalAt: string | null
+  lastSignalAt: string | null
+  updatedAt: string
+}
+
+export async function getTheses(limit = 12): Promise<ThesisData[]> {
+  const { data, error } = await supabase
+    .from('sector_theses')
+    .select(
+      '*, thesis_signals(weight,stance,reasoning,created_at,radar_signals(title,url,source_kind,published_at))'
+    )
+    .in('status', ['forming', 'active', 'confirmed'])
+    .order('conviction', { ascending: false })
+    .order('updated_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+
+  return (data ?? []).map((row) => {
+    const evidenceRows = (row.thesis_signals as Record<string, unknown>[]) ?? []
+    const evidence: ThesisEvidence[] = evidenceRows
+      .map((e) => ({
+        weight: Number(e.weight ?? 0),
+        stance: (e.stance as 'supports' | 'weakens') ?? 'supports',
+        reasoning: (e.reasoning as string) ?? null,
+        created_at: e.created_at as string,
+        signal: (e.radar_signals as ThesisEvidence['signal']) ?? null,
+      }))
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+
+    return {
+      id: row.id as string,
+      sector: row.sector as string,
+      sectorZh: (row.sector_zh as string) ?? null,
+      direction: (row.direction as 'bullish' | 'bearish') ?? 'bullish',
+      status: row.status as string,
+      conviction: Number(row.conviction ?? 0),
+      convictionComponents: (row.conviction_components as Record<string, number>) ?? {},
+      summary: (row.summary as string) ?? null,
+      transmission: (row.transmission as string) ?? null,
+      confirmConditions: (row.confirm_conditions as string[]) ?? [],
+      invalidateConditions: (row.invalidate_conditions as string[]) ?? [],
+      marketReaction: (row.market_reaction as ThesisData['marketReaction']) ?? {},
+      evidence,
+      firstSignalAt: (row.first_signal_at as string) ?? null,
+      lastSignalAt: (row.last_signal_at as string) ?? null,
+      updatedAt: row.updated_at as string,
+    }
+  })
+}
