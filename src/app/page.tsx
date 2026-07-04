@@ -1,22 +1,21 @@
-import { fetchEvents, fetchOpportunities } from "@/lib/server-data";
+import { fetchEvents, fetchTheses } from "@/lib/server-data";
 import { EventsFeed } from "@/components/EventsFeed";
-import { OpportunityRadar } from "@/components/OpportunityRadar";
+import { ThesisPanel } from "@/components/ThesisPanel";
 import { AlertTriangle, DatabaseZap } from "lucide-react";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [eventsResult, opportunitiesResult] = await Promise.allSettled([
+  const [eventsResult, thesesResult] = await Promise.allSettled([
     fetchEvents(),
-    fetchOpportunities(),
+    fetchTheses(),
   ]);
 
   const events = eventsResult.status === "fulfilled" ? eventsResult.value : [];
-  const opportunities = opportunitiesResult.status === "fulfilled" ? opportunitiesResult.value : [];
+  const theses = thesesResult.status === "fulfilled" ? thesesResult.value : [];
   const hasDataError =
-    eventsResult.status === "rejected" ||
-    opportunitiesResult.status === "rejected";
-  const isEmpty = events.length === 0 && opportunities.length === 0;
+    eventsResult.status === "rejected" || thesesResult.status === "rejected";
+  const isEmpty = events.length === 0 && theses.length === 0;
 
   return (
     <div className="max-w-6xl">
@@ -27,7 +26,7 @@ export default async function Home() {
               Signal Intelligence
             </p>
             <h1 className="font-display text-4xl text-[#1A1A2E] sm:text-5xl">
-              Market Radar
+              Sector Radar
             </h1>
           </div>
         </div>
@@ -52,11 +51,11 @@ export default async function Home() {
           <DatabaseZap className="mx-auto mb-3 size-6 text-[#B5882B]" />
           <p className="font-display text-2xl text-[#1A1A2E]">暂无可展示的市场数据</p>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#5C5C6E]">
-            机会和信息流还没有返回结果。确认数据同步任务完成后，刷新页面即可看到市场雷达。
+            论点和信息流还没有返回结果。确认雷达管道运行完成后，刷新页面即可看到板块雷达。
           </p>
         </div>
       ) : (
-        <OpportunityRadar opportunities={opportunities} />
+        <ThesisPanel theses={theses} />
       )}
 
       <div className="border-t border-[#D4CCB8]">
