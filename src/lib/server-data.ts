@@ -1,4 +1,13 @@
-import { getEvents, getOpportunities, getStocks, getTheses, getWatchlist } from '@/lib/db'
+import {
+  getBacktest,
+  getEvents,
+  getOpportunities,
+  getOutcomesForThesis,
+  getStocks,
+  getTheses,
+  getThemeOverviews,
+  getWatchlist,
+} from '@/lib/db'
 
 export type {} // keep file as a module
 
@@ -22,8 +31,20 @@ export async function fetchOpportunities(limit = 6) {
   return getOpportunities(limit)
 }
 
-export async function fetchTheses(limit = 12) {
+export async function fetchTheses(limit = 30) {
   return getTheses(limit)
+}
+
+export async function fetchThemeOverviews() {
+  return getThemeOverviews()
+}
+
+export async function fetchBacktest() {
+  return getBacktest()
+}
+
+export async function fetchOutcomesForThesis(id: string) {
+  return getOutcomesForThesis(id)
 }
 
 export type StockData = Awaited<ReturnType<typeof getStocks>>[number]

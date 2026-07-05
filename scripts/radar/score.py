@@ -48,10 +48,11 @@ def _score_thesis(thesis: dict[str, Any], dry_run: bool) -> None:
 
     market_reaction, priced_in_penalty = _priced_in_check(thesis)
 
+    # 收紧权重:满分难以企及,90+ 应当稀有
     base = (
-        0.45 * max_weight
-        + 12 * min(len(supports), 4)
-        + 10 * min(diversity, 3)
+        0.35 * max_weight
+        + 7 * min(len(supports), 5)
+        + 8 * min(diversity, 3)
     )
     conviction = base * recency * (1 - priced_in_penalty)
     conviction -= 8 * len(weakens)
@@ -97,17 +98,26 @@ def _score_thesis(thesis: dict[str, Any], dry_run: bool) -> None:
 
 
 def _priced_in_check(thesis: dict[str, Any]) -> tuple[dict[str, Any], float]:
-    """Fetch 5d change per mapped instrument; big move in thesis direction => penalty."""
+    """Fetch price stats per mapped instrument; big move in thesis direction => penalty.
+
+    Also writes pct_5d / pct_20d / 30d history back to sector_instruments for the UI.
+    """
     instruments = db.get(
         "sector_instruments",
-        f"select=market,symbol,name&sector=eq.{thesis['sector']}&limit=15",
+        f"select=id,market,symbol,name&sector=eq.{thesis['sector']}&limit=15",
     )
+    now = datetime.now(timezone.utc).isoformat()
     reaction: dict[str, list[dict[str, Any]]] = {}
     moves: list[float] = []
     for inst in instruments:
-        pct = _five_day_change(inst["symbol"])
-        if pct is None:
+        stats = _price_stats(inst["symbol"])
+        if stats is None:
             continue
+        try:
+            db.update("sector_instruments", f"id=eq.{inst['id']}", {**stats, "updated_at": now})
+        except Exception as e:  # noqa: BLE001
+            print(f"  instrument update failed {inst['symbol']}: {e}")
+        pct = stats["pct_5d"]
         reaction.setdefault(inst["market"], []).append(
             {"symbol": inst["symbol"], "name": inst.get("name"), "pct_5d": round(pct, 1)}
         )
@@ -123,15 +133,25 @@ def _priced_in_check(thesis: dict[str, Any]) -> tuple[dict[str, Any], float]:
     return summary, penalty
 
 
-def _five_day_change(symbol: str) -> float | None:
+def _price_stats(symbol: str) -> dict[str, Any] | None:
+    """30d daily closes -> pct_5d, pct_20d, history."""
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5d&interval=1d"
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1mo&interval=1d"
         r = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
         r.raise_for_status()
-        closes = [c for c in r.json()["chart"]["result"][0]["indicators"]["quote"][0]["close"] if c is not None]
+        closes = [
+            round(c, 3)
+            for c in r.json()["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+            if c is not None
+        ]
         if len(closes) < 2:
             return None
-        return (closes[-1] - closes[0]) / closes[0] * 100
+        ref5 = closes[-6] if len(closes) >= 6 else closes[0]
+        return {
+            "pct_5d": round((closes[-1] - ref5) / ref5 * 100, 2),
+            "pct_20d": round((closes[-1] - closes[0]) / closes[0] * 100, 2),
+            "history": closes,
+        }
     except Exception:  # noqa: BLE001
         return None
 

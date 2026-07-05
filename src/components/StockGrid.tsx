@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { CalendarClock, TrendingDown, TrendingUp } from "lucide-react";
 
 type Stock = {
   ticker: string;
@@ -67,22 +67,10 @@ export function StockGrid({ initialStocks }: { initialStocks: Stock[] }) {
     return () => clearInterval(interval);
   }, []);
 
-  const total = stocks.length;
-  const cols = 4;
-  const smCols = 2;
-
   return (
-    <div className="mb-10 grid gap-y-0 sm:grid-cols-2 lg:grid-cols-4">
-      {stocks.map((stock, index) => {
+    <div className="mb-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {stocks.map((stock) => {
         const isPos = stock.changePct >= 0;
-        const isLastInLgRow = (index + 1) % cols === 0 || index === total - 1;
-        const smRowCount = Math.ceil(total / smCols);
-        const itemSmRow = Math.floor(index / smCols) + 1;
-        const isLastSmRow = itemSmRow === smRowCount;
-        const borderClass = !isLastInLgRow
-          ? "lg:border-r lg:border-[#D4CCB8]"
-          : "";
-        const rowBorderClass = isLastSmRow ? "sm:border-b-0" : "";
         const isFresh = freshTickers.has(stock.ticker);
         const badge = getEarningsBadge(stock.earningsDate);
 
@@ -90,46 +78,49 @@ export function StockGrid({ initialStocks }: { initialStocks: Stock[] }) {
           <Link
             key={stock.ticker}
             href={`/stock/${stock.ticker}`}
-            className={`group border-b border-[#D4CCB8] px-5 py-5 transition-colors hover:bg-[#EDE8DE] sm:px-6 lg:border-b-0 ${borderClass} ${rowBorderClass}`}
+            className="group rounded-xl border border-border bg-surface px-5 py-4 transition-all hover:border-faint/50 hover:bg-surface-2"
           >
             <div className="mb-3 flex items-start justify-between">
-              <span className="font-mono text-xs uppercase tracking-[0.15em] text-[#5C5C6E]">
+              <span className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs font-semibold uppercase tracking-[0.12em] text-foreground/90 group-hover:bg-background">
                 {stock.ticker}
               </span>
               <div className="flex items-center gap-1.5">
                 {/* Fresh pulse dot — shows for 3s after data refreshes */}
                 {isFresh && (
-                  <span className="size-1.5 rounded-full bg-[#1B4332] animate-pulse" />
+                  <span className="size-1.5 animate-pulse rounded-full bg-up" />
                 )}
                 {isPos ? (
-                  <TrendingUp className="size-3.5 text-[#1B4332]" />
+                  <TrendingUp className="size-3.5 text-up" />
                 ) : (
-                  <TrendingDown className="size-3.5 text-[#7C1D1D]" />
+                  <TrendingDown className="size-3.5 text-down" />
                 )}
               </div>
             </div>
-            <p className="mb-1 font-display text-[2rem] leading-none text-[#1A1A2E] tabular-nums sm:text-4xl">
+            <p className="num mb-1.5 font-mono text-[1.75rem] font-semibold leading-none text-foreground">
               ${stock.price.toFixed(2)}
             </p>
-            <p
-              className={`tabular-nums font-mono text-xs ${
-                isPos ? "text-[#1B4332]" : "text-[#7C1D1D]"
-              }`}
-            >
-              {isPos ? "+" : ""}
-              {stock.changePct.toFixed(2)}%
-              <span className="ml-2 text-[#9A9AAA]">
+            <p className="flex items-center gap-2 font-mono text-xs">
+              <span
+                className={`num rounded px-1.5 py-0.5 font-semibold ${
+                  isPos ? "bg-up/10 text-up" : "bg-down/10 text-down"
+                }`}
+              >
+                {isPos ? "+" : ""}
+                {stock.changePct.toFixed(2)}%
+              </span>
+              <span className="num text-faint">
                 {isPos ? "+" : ""}
                 {stock.changeAmt.toFixed(2)}
               </span>
             </p>
             {badge && (
               <p
-                className={`mt-2 font-mono text-[11px] ${
-                  badge.daysLeft <= 3 ? "text-[#B5882B]" : "text-[#5C5C6E]"
+                className={`mt-2.5 flex items-center gap-1.5 font-mono text-xs ${
+                  badge.daysLeft <= 3 ? "text-warn" : "text-faint"
                 }`}
               >
-                📅 {badge.label}
+                <CalendarClock className="size-3" />
+                {badge.label}
               </p>
             )}
           </Link>

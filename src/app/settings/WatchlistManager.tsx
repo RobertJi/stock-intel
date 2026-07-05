@@ -78,36 +78,36 @@ export function WatchlistManager({
   return (
     <div className="max-w-xl">
       {/* Header */}
-      <div className="mb-8 border-b border-[#D4CCB8] pb-4">
-        <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.3em] text-[#B5882B]">
+      <div className="mb-8 border-b border-border pb-4">
+        <p className="mb-2 font-mono text-xs uppercase tracking-[0.3em] text-accent">
           Settings
         </p>
-        <h1 className="font-display text-3xl text-[#1A1A2E]">Watchlist</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">Watchlist</h1>
       </div>
 
       {/* Current watchlist */}
       <div className="mb-8">
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-wider text-[#5C5C6E]">
-          当前关注 · {watchlist.length} 只
+        <p className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          当前关注 · <span className="num text-foreground">{watchlist.length}</span> 只
         </p>
-        <div className="divide-y divide-[#D4CCB8] border border-[#D4CCB8]">
+        <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
           {watchlist.length === 0 && (
-            <p className="px-4 py-4 font-mono text-sm text-[#9A9AAA]">空</p>
+            <p className="px-4 py-4 font-mono text-sm text-faint">空</p>
           )}
           {watchlist.map((item) => (
-            <div key={item.ticker} className="flex items-center justify-between px-4 py-3 hover:bg-[#FAF7F0]">
+            <div key={item.ticker} className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface-2">
               <div>
-                <span className="font-mono text-sm font-semibold tracking-wider text-[#1A1A2E]">
+                <span className="font-mono text-sm font-semibold tracking-wider text-foreground">
                   {item.ticker}
                 </span>
                 {item.cik && (
-                  <span className="ml-3 font-mono text-[10px] text-[#9A9AAA]">CIK {item.cik}</span>
+                  <span className="ml-3 font-mono text-xs text-faint">CIK {item.cik}</span>
                 )}
               </div>
               <button
                 onClick={() => handleRemove(item.ticker)}
                 disabled={removing === item.ticker}
-                className="rounded p-1.5 text-[#9A9AAA] transition-colors hover:bg-[#EDE8DE] hover:text-[#7C1D1D] disabled:opacity-40"
+                className="rounded-md p-1.5 text-faint transition-colors hover:bg-down/10 hover:text-down disabled:opacity-40"
                 title="移除"
               >
                 {removing === item.ticker ? (
@@ -123,7 +123,7 @@ export function WatchlistManager({
 
       {/* Add new ticker */}
       <div>
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-wider text-[#5C5C6E]">
+        <p className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
           添加股票
         </p>
         <div className="flex gap-2">
@@ -137,32 +137,32 @@ export function WatchlistManager({
               setPreviewError("");
             }}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="flex-1 border border-[#D4CCB8] bg-[#FAF7F0] px-4 py-2.5 font-mono text-sm uppercase text-[#1A1A2E] placeholder:normal-case placeholder:text-[#9A9AAA] focus:border-[#B5882B] focus:outline-none"
+            className="flex-1 rounded-lg border border-input bg-surface-2 px-4 py-2.5 font-mono text-sm uppercase text-foreground placeholder:normal-case placeholder:text-faint focus:border-accent focus:outline-none"
           />
           <button
             onClick={handleSearch}
             disabled={validating || !input.trim()}
-            className="flex items-center gap-1.5 border border-[#D4CCB8] px-4 py-2.5 font-mono text-sm text-[#5C5C6E] transition-colors hover:bg-[#EDE8DE] disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-4 py-2.5 font-mono text-sm text-muted-foreground transition-colors hover:border-faint/40 hover:text-foreground disabled:opacity-40"
           >
             {validating ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
           </button>
         </div>
 
         {previewError && (
-          <p className="mt-2 font-mono text-xs text-[#7C1D1D]">{previewError}</p>
+          <p className="mt-2 font-mono text-xs text-down">{previewError}</p>
         )}
 
         {preview && (
-          <div className="mt-2 flex items-center justify-between border border-[#D4CCB8] bg-[#EDE8DE]/40 px-4 py-3">
+          <div className="mt-2 flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-3">
             <div className="min-w-0">
-              <span className="font-mono text-sm font-semibold text-[#1A1A2E]">{preview.symbol}</span>
-              <span className="ml-2 truncate font-sans text-sm text-[#5C5C6E]">{preview.name}</span>
-              <span className="ml-2 font-mono text-[10px] text-[#B5882B]">{preview.exchange}</span>
+              <span className="font-mono text-sm font-semibold text-foreground">{preview.symbol}</span>
+              <span className="ml-2 truncate text-sm text-muted-foreground">{preview.name}</span>
+              <span className="ml-2 font-mono text-xs text-accent">{preview.exchange}</span>
             </div>
             <button
               onClick={handleAdd}
               disabled={adding || alreadyAdded}
-              className="ml-4 flex shrink-0 items-center gap-1.5 bg-[#1A1A2E] px-3 py-1.5 font-mono text-xs text-[#E8E3D8] transition-colors hover:bg-[#2A2A4E] disabled:opacity-40"
+              className="ml-4 flex shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 font-mono text-xs font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
             >
               {adding ? (
                 <Loader2 className="size-3 animate-spin" />
@@ -175,7 +175,7 @@ export function WatchlistManager({
         )}
       </div>
 
-      <p className="mt-8 font-mono text-[10px] text-[#9A9AAA]">
+      <p className="mt-8 font-mono text-xs text-faint">
         修改在下次同步时生效（最长约 2 小时）
       </p>
     </div>

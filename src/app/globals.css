@@ -5,9 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-dm-sans);
-  --font-mono: var(--font-ibm-plex-mono);
-  --font-display: var(--font-dm-serif);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-display: var(--font-space-grotesk);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-ring: var(--ring);
@@ -24,31 +24,45 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-up: var(--up);
+  --color-down: var(--down);
+  --color-warn: var(--warn);
+  --color-faint: var(--faint);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
 }
 
 :root {
-  --background: #f5f0e8;
-  --foreground: #1a1a2e;
-  --card: #ede8de;
-  --card-foreground: #1a1a2e;
-  --popover: #ede8de;
-  --popover-foreground: #1a1a2e;
-  --primary: #1a1a2e;
-  --primary-foreground: #f5f0e8;
-  --secondary: #ede8de;
-  --secondary-foreground: #1a1a2e;
-  --muted: #ede8de;
-  --muted-foreground: #5c5c6e;
-  --accent: #b5882b;
-  --accent-foreground: #f5f0e8;
-  --destructive: #7c1d1d;
-  --border: #d4ccb8;
-  --input: #d4ccb8;
-  --ring: #b5882b;
-  --radius: 0.25rem;
+  /* Dark terminal palette */
+  --background: #0a0e16;
+  --foreground: #e6ecf5;
+  --card: #10151f;
+  --card-foreground: #e6ecf5;
+  --surface: #10151f;
+  --surface-2: #161d2a;
+  --popover: #161d2a;
+  --popover-foreground: #e6ecf5;
+  --primary: #f0b429;
+  --primary-foreground: #0a0e16;
+  --secondary: #161d2a;
+  --secondary-foreground: #e6ecf5;
+  --muted: #161d2a;
+  --muted-foreground: #93a0b4;
+  --accent: #f0b429;
+  --accent-foreground: #0a0e16;
+  --destructive: #f6465d;
+  --border: #1d2634;
+  --input: #232e40;
+  --ring: #f0b429;
+  --radius: 0.625rem;
+  /* Market semantics */
+  --up: #0ecb81;
+  --down: #f6465d;
+  --warn: #f0b429;
+  --faint: #5c6a80;
 }
 
 @layer base {
@@ -57,11 +71,20 @@
   }
 
   html {
-    @apply bg-[#F5F0E8] font-sans;
+    @apply bg-[#0a0e16] font-sans;
+    color-scheme: dark;
+    /* 全局字号基准:所有 rem 尺寸按 18/16 放大 */
+    font-size: 18px;
   }
 
+
   body {
-    @apply overflow-x-hidden bg-background text-foreground antialiased;
+    /* 用 clip 而不是 hidden:hidden 会把 body 变成独立滚动容器,导致锚点/window 滚动失效 */
+    @apply overflow-x-clip bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(240, 180, 41, 0.06), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(14, 203, 129, 0.04), transparent);
+    background-attachment: fixed;
   }
 
   a,
@@ -70,7 +93,38 @@
   }
 
   ::selection {
-    background: rgba(181, 136, 43, 0.22);
-    color: #1a1a2e;
+    background: rgba(240, 180, 41, 0.28);
+    color: #e6ecf5;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #232e40;
+    border-radius: 8px;
+    border: 2px solid #0a0e16;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2e3c54;
+  }
+}
+
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .panel {
+    @apply rounded-xl border border-border bg-surface;
+  }
+  .glow-up {
+    box-shadow: 0 0 24px -8px rgba(14, 203, 129, 0.25);
+  }
+  .glow-down {
+    box-shadow: 0 0 24px -8px rgba(246, 70, 93, 0.25);
   }
 }

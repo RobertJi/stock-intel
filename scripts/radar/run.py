@@ -8,7 +8,7 @@ from __future__ import annotations
 import sys
 
 from . import alert as alert_mod
-from . import db, outcome, reason, score, triage
+from . import db, outcome, reason, score, synthesize, triage
 from .collectors import benchmarks, events_bridge, hackernews, news_rss, price_moves, reddit
 
 COLLECTORS = [news_rss, price_moves, benchmarks, events_bridge, reddit, hackernews]
@@ -43,6 +43,7 @@ def main() -> None:
         "triage": lambda: triage.run(dry_run),
         "reason": lambda: reason.run(dry_run),
         "score": lambda: score.run(dry_run),
+        "synthesize": lambda: synthesize.run(dry_run),
         "alert": lambda: alert_mod.run(dry_run),
         "outcome": lambda: outcome.run(dry_run),
     }

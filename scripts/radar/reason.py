@@ -7,18 +7,20 @@ from typing import Any
 
 from . import config, db, llm
 
+THEMES = ["AI与半导体", "新能源与电动车", "能源与大宗", "消费与互联网", "医药健康", "金融地产", "宏观与政策", "其他"]
+
 SYSTEM = """你是市场传导链分析师。给定一批新信号和当前活跃的板块论点,对每条信号推断:
-1. 它影响哪些板块(用 kebab-case slug,如 memory-semiconductors),方向 bullish/bearish
+1. 它影响哪些板块(用 kebab-case slug,如 memory-semiconductors),方向 bullish/bearish,并给出所属主题 theme(必须从这个列表选:AI与半导体/新能源与电动车/能源与大宗/消费与互联网/医药健康/金融地产/宏观与政策/其他)
 2. 传导链:一步步因果(如 "DRAM合约价+10% → 存储原厂毛利改善 → 存储板块盈利上修")
 3. 证据强度 weight 0-100(独家硬数据高分,模糊传闻低分)
 4. 归属:若与某活跃论点是同一判断,给出其 thesis_id;否则 thesis_id 为 null(新建)
 5. 新建论点时给出 sector_zh、summary、confirm_conditions、invalidate_conditions、以及各市场(US/HK/CN/JP/KR)可表达该判断的标的 instruments(每个市场最多 2 个,保持输出紧凑)
 
 只输出 JSON 数组,每项:
-{"signal_idx": <编号>, "impacts": [{"sector": "...", "sector_zh": "...", "direction": "bullish", "thesis_id": null 或 "uuid",
+{"signal_idx": <编号>, "impacts": [{"sector": "...", "sector_zh": "...", "theme": "AI与半导体", "direction": "bullish", "thesis_id": null 或 "uuid",
   "transmission": "...", "weight": 0-100, "stance": "supports"|"weakens", "reasoning": "...",
   "summary": "...", "confirm_conditions": ["..."], "invalidate_conditions": ["..."],
-  "instruments": [{"market": "US", "symbol": "MU", "name": "Micron", "relation": "direct", "sensitivity": "high"}]}]}
+  "instruments": [{"market": "US", "symbol": "MU", "name": "Micron", "relation": "direct|upstream|downstream|competitor|customer|supplier|partner|proxy_etf", "sensitivity": "high|medium|low", "rationale": "必须说清:受论点中哪一环影响、影响方向(利好/利空)、以及为什么是这个敏感度(如营收占比/替代弹性)"}]}]}
 无板块影响的信号输出 "impacts": []。"""
 
 
@@ -110,6 +112,7 @@ def _apply(sig: dict[str, Any], impacts: list[dict[str, Any]], known_thesis_ids:
                 [{
                     "sector": sector,
                     "sector_zh": imp.get("sector_zh"),
+                    "theme": imp.get("theme") if imp.get("theme") in THEMES else "其他",
                     "direction": direction,
                     "status": "forming",
                     "summary": imp.get("summary") or imp.get("reasoning"),
@@ -132,6 +135,7 @@ def _apply(sig: dict[str, Any], impacts: list[dict[str, Any]], known_thesis_ids:
                     "name": inst.get("name"),
                     "relation": inst.get("relation") or "direct",
                     "sensitivity": inst.get("sensitivity") or "medium",
+                    "rationale": inst.get("rationale"),
                 }
                 for inst in (imp.get("instruments") or [])
                 if inst.get("market") and inst.get("symbol")

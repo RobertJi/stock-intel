@@ -177,20 +177,27 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
     );
   }, [sellTradesInRange]);
 
+  const statCards = [
+    { icon: Users, label: "活跃高管", value: String(executiveSummaries.length) },
+    { icon: TrendingDown, label: "卖出总股数", value: formatShares(totals.shares) },
+    { icon: BarChart3, label: "披露总金额", value: formatMoney(totals.value) },
+    { icon: BarChart3, label: "卖出笔数", value: String(totals.count) },
+  ];
+
   return (
     <div className="space-y-8">
       <div>
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[#5C5C6E]">
+            <p className="mb-1 font-mono text-xs uppercase tracking-[0.2em] text-faint">
               30 日走势
             </p>
             {selectedSummary ? (
-              <p className="font-sans text-sm text-[#5C5C6E]">
-                当前只显示 <span className="text-[#1A1A2E]">{selectedSummary.name}</span> 的卖出标记
+              <p className="text-sm text-muted-foreground">
+                当前只显示 <span className="text-accent">{selectedSummary.name}</span> 的卖出标记
               </p>
             ) : (
-              <p className="font-sans text-sm text-[#5C5C6E]">默认显示全部内幕交易标记</p>
+              <p className="text-sm text-muted-foreground">默认显示全部内幕交易标记</p>
             )}
           </div>
         </div>
@@ -202,26 +209,26 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
         />
       </div>
 
-      <section className="space-y-4 border-t border-[#D4CCB8] pt-6">
+      <section className="space-y-4 border-t border-border pt-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.3em] text-[#B5882B]">
+            <p className="mb-1 font-mono text-xs uppercase tracking-[0.3em] text-accent">
               Executive Insights
             </p>
-            <h2 className="font-display text-2xl text-[#1A1A2E] sm:text-3xl">高管卖出洞察</h2>
-            <p className="mt-2 max-w-2xl font-sans text-sm leading-6 text-[#5C5C6E]">
+            <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">高管卖出洞察</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               查看近一段时间内各位高管的卖出强度，选中某位后，图表与事件流会同步聚焦到该高管。
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {RANGE_OPTIONS.map((option) => (
               <button
                 key={option.days}
                 onClick={() => setRangeDays(option.days)}
-                className={`rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-wider transition-colors ${
+                className={`rounded-md px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors ${
                   rangeDays === option.days
-                    ? "bg-[#1A1A2E] text-[#E8E3D8]"
-                    : "bg-[#EDE8DE] text-[#5C5C6E] hover:text-[#1A1A2E]"
+                    ? "bg-accent font-semibold text-accent-foreground"
+                    : "border border-border bg-surface text-muted-foreground hover:border-faint/40 hover:text-foreground"
                 }`}
               >
                 {option.label}
@@ -230,49 +237,30 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-[#D4CCB8] bg-[#F8F4EC] p-4">
-            <div className="mb-3 flex items-center gap-2 text-[#5C5C6E]">
-              <Users className="size-4" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em]">活跃高管</span>
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          {statCards.map(({ icon: Icon, label, value }) => (
+            <div key={label} className="rounded-xl border border-border bg-surface p-4">
+              <div className="mb-3 flex items-center gap-2 text-faint">
+                <Icon className="size-4" />
+                <span className="font-mono text-xs uppercase tracking-[0.2em]">{label}</span>
+              </div>
+              <p className="num font-mono text-2xl font-bold text-foreground">{value}</p>
             </div>
-            <p className="font-display text-3xl text-[#1A1A2E]">{executiveSummaries.length}</p>
-          </div>
-          <div className="rounded-2xl border border-[#D4CCB8] bg-[#F8F4EC] p-4">
-            <div className="mb-3 flex items-center gap-2 text-[#5C5C6E]">
-              <TrendingDown className="size-4" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em]">卖出总股数</span>
-            </div>
-            <p className="font-display text-3xl text-[#1A1A2E]">{formatShares(totals.shares)}</p>
-          </div>
-          <div className="rounded-2xl border border-[#D4CCB8] bg-[#F8F4EC] p-4">
-            <div className="mb-3 flex items-center gap-2 text-[#5C5C6E]">
-              <BarChart3 className="size-4" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em]">披露总金额</span>
-            </div>
-            <p className="font-display text-3xl text-[#1A1A2E]">{formatMoney(totals.value)}</p>
-          </div>
-          <div className="rounded-2xl border border-[#D4CCB8] bg-[#F8F4EC] p-4">
-            <div className="mb-3 flex items-center gap-2 text-[#5C5C6E]">
-              <BarChart3 className="size-4" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em]">卖出笔数</span>
-            </div>
-            <p className="font-display text-3xl text-[#1A1A2E]">{totals.count}</p>
-          </div>
+          ))}
         </div>
 
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => setSelectedExecutive(null)}
-            className={`w-full rounded-3xl border p-4 text-left transition-colors sm:w-[280px] ${
+            className={`w-full rounded-xl border p-4 text-left transition-colors sm:w-[280px] ${
               selectedExecutive === null
-                ? "border-[#1A1A2E] bg-[#1A1A2E] text-[#F5F0E8]"
-                : "border-[#D4CCB8] bg-[#F8F4EC] text-[#1A1A2E] hover:bg-[#EFE8DB]"
+                ? "border-accent/60 bg-accent/[0.08] ring-1 ring-accent/30"
+                : "border-border bg-surface hover:border-faint/40 hover:bg-surface-2"
             }`}
           >
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] opacity-70">All Executives</p>
-            <p className="mt-2 font-display text-2xl">全部高管</p>
-            <p className="mt-2 text-sm leading-6 opacity-80">
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-faint">All Executives</p>
+            <p className="mt-2 font-display text-xl font-semibold text-foreground">全部高管</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               查看全部内幕交易记录，并对比近 {rangeDays} 天各位高管的卖出强度。
             </p>
           </button>
@@ -283,18 +271,16 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
               <button
                 key={executive.name}
                 onClick={() => setSelectedExecutive(executive.name)}
-                className={`w-full rounded-3xl border p-4 text-left transition-colors sm:w-[280px] ${
+                className={`w-full rounded-xl border p-4 text-left transition-colors sm:w-[280px] ${
                   isActive
-                    ? "border-[#1A1A2E] bg-[#1A1A2E] text-[#F5F0E8]"
-                    : "border-[#D4CCB8] bg-[#F8F4EC] text-[#1A1A2E] hover:bg-[#EFE8DB]"
+                    ? "border-accent/60 bg-accent/[0.08] ring-1 ring-accent/30"
+                    : "border-border bg-surface hover:border-faint/40 hover:bg-surface-2"
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div
-                    className={`flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 bg-white font-mono text-sm ${
-                      isActive
-                        ? "border-[#B5882B] text-[#1A1A2E]"
-                        : "border-white text-[#1A1A2E] shadow-sm ring-1 ring-[#D4CCB8]"
+                    className={`flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 bg-surface-2 font-mono text-sm ${
+                      isActive ? "border-accent" : "border-border"
                     }`}
                   >
                     {executive.avatarUrl ? (
@@ -306,32 +292,30 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
                         className="size-full object-cover"
                       />
                     ) : (
-                      <span className={isActive ? "text-[#F5F0E8]" : "text-[#1A1A2E]"}>
-                        {executive.avatar}
-                      </span>
+                      <span className="text-foreground">{executive.avatar}</span>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-display text-xl">{executive.name}</p>
-                    <p className="mt-1 line-clamp-2 font-mono text-[10px] uppercase tracking-[0.18em] opacity-70">
+                    <p className="truncate font-display text-lg font-semibold text-foreground">{executive.name}</p>
+                    <p className="mt-1 line-clamp-2 font-mono text-xs uppercase tracking-[0.14em] text-faint">
                       {executive.title || "公司高管"}
                     </p>
                   </div>
                 </div>
-                <p className="mt-4 line-clamp-3 text-sm leading-6 opacity-80">{executive.bio}</p>
+                <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">{executive.bio}</p>
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">总股数</p>
-                    <p className="mt-1 font-display text-2xl">{formatShares(executive.totalShares)}</p>
+                    <p className="font-mono text-xs uppercase tracking-[0.18em] text-faint">总股数</p>
+                    <p className="num mt-1 font-mono text-xl font-bold text-down">{formatShares(executive.totalShares)}</p>
                   </div>
                   <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-60">卖出笔数</p>
-                    <p className="mt-1 font-display text-2xl">{executive.sellCount}</p>
+                    <p className="font-mono text-xs uppercase tracking-[0.18em] text-faint">卖出笔数</p>
+                    <p className="num mt-1 font-mono text-xl font-bold text-foreground">{executive.sellCount}</p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center justify-between gap-3 text-xs opacity-70">
+                <div className="mt-4 flex items-center justify-between gap-3 font-mono text-xs text-faint">
                   <span>金额 {formatMoney(executive.totalValue)}</span>
-                  <span>最近 {executive.latestDate}</span>
+                  <span className="num">最近 {executive.latestDate}</span>
                 </div>
               </button>
             );
@@ -339,15 +323,15 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
         </div>
       </section>
 
-      <section className="border-t border-[#D4CCB8]">
-        <div className="border-b border-[#D4CCB8] py-5">
-          <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.3em] text-[#B5882B]">
+      <section className="border-t border-border">
+        <div className="border-b border-border py-5">
+          <p className="mb-1 font-mono text-xs uppercase tracking-[0.3em] text-accent">
             Signal Flow
           </p>
-          <h2 className="font-display text-xl text-[#1A1A2E] sm:text-2xl">
+          <h2 className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
             {selectedSummary ? `${selectedSummary.name} 的交易记录` : "近期事件与市场动态"}
           </h2>
-          <p className="mt-2 font-sans text-sm text-[#5C5C6E]">
+          <p className="mt-2 text-sm text-muted-foreground">
             {selectedSummary
               ? `当前仅展示 ${selectedSummary.name} 的内幕交易披露。`
               : "主信号流现在只放 SEC 事件和公司直接动态，竞争/生态新闻放到下方单独查看。"}
@@ -355,7 +339,7 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
         </div>
 
         {filteredEvents.length === 0 ? (
-          <p className="py-6 font-sans text-sm text-[#5C5C6E]">暂无符合条件的事件</p>
+          <p className="py-6 text-sm text-muted-foreground">暂无符合条件的事件</p>
         ) : (
           <EventsFeed
             key={`${selectedExecutive ?? 'all'}-${rangeDays}`}
@@ -366,13 +350,13 @@ export function ExecutiveInsights({ stock, events }: ExecutiveInsightsProps) {
       </section>
 
       {!selectedSummary && ecosystemNews.length > 0 && (
-        <section className="border-t border-[#D4CCB8]">
-          <div className="border-b border-[#D4CCB8] py-5">
-            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.3em] text-[#B5882B]">
+        <section className="border-t border-border">
+          <div className="border-b border-border py-5">
+            <p className="mb-1 font-mono text-xs uppercase tracking-[0.3em] text-accent">
               Ecosystem Watch
             </p>
-            <h2 className="font-display text-xl text-[#1A1A2E] sm:text-2xl">竞争与生态动态</h2>
-            <p className="mt-2 font-sans text-sm text-[#5C5C6E]">
+            <h2 className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl">竞争与生态动态</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               这里放和该股票有关、但不属于公司直接动态的竞争格局、供应链、合作与生态新闻。
             </p>
           </div>
