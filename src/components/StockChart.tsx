@@ -2,9 +2,9 @@
 
 import dynamic from "next/dynamic";
 import {
+  Area,
   CartesianGrid,
-  Line,
-  LineChart,
+  ComposedChart,
   ReferenceDot,
   ResponsiveContainer,
   Tooltip,
@@ -28,6 +28,9 @@ type StockChartProps = {
   insiderTrades?: InsiderTrade[];
 };
 
+const UP = "#0ECB81";
+const DOWN = "#F6465D";
+
 function generateSeries(ticker: string, basePrice: number) {
   return Array.from({ length: 30 }, (_, index) => {
     const drift = (index - 15) * 0.85;
@@ -44,13 +47,13 @@ function generateSeries(ticker: string, basePrice: number) {
 function InsiderDot({ cx, cy, type }: { cx?: number; cy?: number; type: "BUY" | "SELL" }) {
   if (cx === undefined || cy === undefined) return null;
   const isBuy = type === "BUY";
-  const color = isBuy ? "#1B4332" : "#7C1D1D";
+  const color = isBuy ? UP : DOWN;
   // Triangle pointing up (buy) or down (sell)
   const size = 8;
   const points = isBuy
     ? `${cx},${cy - size} ${cx - size * 0.8},${cy + size * 0.5} ${cx + size * 0.8},${cy + size * 0.5}`
     : `${cx},${cy + size} ${cx - size * 0.8},${cy - size * 0.5} ${cx + size * 0.8},${cy - size * 0.5}`;
-  return <polygon points={points} fill={color} opacity={0.85} />;
+  return <polygon points={points} fill={color} opacity={0.9} />;
 }
 
 function StockChartInner({ ticker, basePrice, history, insiderTrades = [] }: StockChartProps) {
@@ -61,6 +64,10 @@ function StockChartInner({ ticker, basePrice, history, insiderTrades = [] }: Sto
         price: point.close,
       }))
     : generateSeries(ticker, basePrice).map(d => ({ ...d, fullDate: d.day }));
+
+  const trendUp = data.length > 1 && data[data.length - 1].price >= data[0].price;
+  const lineColor = trendUp ? UP : DOWN;
+  const gradientId = `price-fill-${ticker}`;
 
   // Map insider trades to chart x-axis labels (MM-DD)
   const tradeMarkers = insiderTrades
@@ -76,42 +83,48 @@ function StockChartInner({ ticker, basePrice, history, insiderTrades = [] }: Sto
   const hasSell = insiderTrades.some((trade) => trade.type === "INSIDER_SELL");
 
   return (
-    <div className="h-[320px] w-full">
+    <div className="h-[320px] w-full rounded-xl border border-border bg-surface p-4">
       {/* Legend */}
       {insiderTrades.length > 0 && (
         <div className="mb-2 flex items-center gap-4">
           {hasBuy && (
             <div className="flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 12 12">
-                <polygon points="6,1 1,11 11,11" fill="#1B4332" opacity="0.85" />
+                <polygon points="6,1 1,11 11,11" fill={UP} opacity="0.9" />
               </svg>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[#5C5C6E]">内幕买入</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">内幕买入</span>
             </div>
           )}
           {hasSell && (
             <div className="flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 12 12">
-                <polygon points="6,11 1,1 11,1" fill="#7C1D1D" opacity="0.85" />
+                <polygon points="6,11 1,1 11,1" fill={DOWN} opacity="0.9" />
               </svg>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[#5C5C6E]">内幕卖出</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">内幕卖出</span>
             </div>
           )}
         </div>
       )}
 
-      <ResponsiveContainer width="100%" height={insiderTrades.length > 0 ? "90%" : "100%"}>
-        <LineChart data={data} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="rgba(26,26,46,0.08)" vertical={false} />
+      <ResponsiveContainer width="100%" height={insiderTrades.length > 0 ? "88%" : "100%"}>
+        <ComposedChart data={data} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={lineColor} stopOpacity={0.22} />
+              <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke="rgba(230,236,245,0.06)" vertical={false} />
           <XAxis
             dataKey="day"
-            tick={{ fill: "#5C5C6E", fontSize: 11 }}
+            tick={{ fill: "#5C6A80", fontSize: 13.5 }}
             axisLine={false}
             tickLine={false}
             interval={4}
           />
           <YAxis
             domain={["dataMin - 5", "dataMax + 5"]}
-            tick={{ fill: "#5C5C6E", fontSize: 11 }}
+            tick={{ fill: "#5C6A80", fontSize: 13.5 }}
             axisLine={false}
             tickLine={false}
             width={60}
@@ -123,17 +136,17 @@ function StockChartInner({ ticker, basePrice, history, insiderTrades = [] }: Sto
               // Check if there's an insider trade on this date
               const trade = tradeMarkers.find(t => t.xLabel === label);
               return (
-                <div className="rounded border border-[#1A1A2E]/10 bg-[#1A1A2E] px-4 py-3 shadow-lg min-w-[140px]">
-                  <p className="font-mono text-xs text-[#E8E3D8]/70">{label}</p>
-                  <p className="mt-1 font-mono text-sm text-[#E8E3D8]">
+                <div className="min-w-[140px] rounded-lg border border-border bg-[#161D2A] px-4 py-3 shadow-xl shadow-black/40">
+                  <p className="font-mono text-xs text-muted-foreground">{label}</p>
+                  <p className="num mt-1 font-mono text-sm font-semibold text-foreground">
                     ${Number(payload[0].value).toFixed(2)}
                   </p>
                   {trade && (
-                    <div className={`mt-2 border-t border-white/10 pt-2 font-mono text-[10px] ${
-                      trade.type === "INSIDER_BUY" ? "text-[#86EFAC]" : "text-[#FCA5A5]"
+                    <div className={`mt-2 border-t border-white/10 pt-2 font-mono text-xs ${
+                      trade.type === "INSIDER_BUY" ? "text-up" : "text-down"
                     }`}>
                       <p>{trade.type === "INSIDER_BUY" ? "▲ 内幕买入" : "▼ 内幕卖出"}</p>
-                      <p className="text-[#E8E3D8]/60">{trade.insiderName}</p>
+                      <p className="text-muted-foreground">{trade.insiderName}</p>
                       <p>{trade.shares.toLocaleString()} 股 @ ${trade.price}</p>
                     </div>
                   )}
@@ -141,13 +154,14 @@ function StockChartInner({ ticker, basePrice, history, insiderTrades = [] }: Sto
               );
             }}
           />
-          <Line
+          <Area
             type="monotone"
             dataKey="price"
-            stroke="#1B4332"
-            strokeWidth={2.5}
+            stroke={lineColor}
+            strokeWidth={2}
+            fill={`url(#${gradientId})`}
             dot={false}
-            activeDot={{ r: 4, fill: "#B5882B", stroke: "#F5F0E8", strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: "#F0B429", stroke: "#0A0E16", strokeWidth: 2 }}
           />
 
           {/* Insider trade markers */}
@@ -159,7 +173,7 @@ function StockChartInner({ ticker, basePrice, history, insiderTrades = [] }: Sto
               shape={<InsiderDot type={t.type === "INSIDER_BUY" ? "BUY" : "SELL"} />}
             />
           ))}
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );
@@ -167,5 +181,5 @@ function StockChartInner({ ticker, basePrice, history, insiderTrades = [] }: Sto
 
 export const StockChart = dynamic(() => Promise.resolve(StockChartInner), {
   ssr: false,
-  loading: () => <div className="h-[320px] w-full animate-pulse bg-[#EDE8DE]" />,
+  loading: () => <div className="h-[320px] w-full animate-pulse rounded-xl border border-border bg-surface" />,
 });

@@ -38,7 +38,7 @@ function localizeTitle(title: string, lang: "zh" | "en"): string {
   if (insiderBuy) return `内幕人士买入 ${insiderBuy[2]} 股`;
 
   const cleaned = title
-    .replace(/^Item\s+\d+\.\d+\s*[\u2014\-\.]*\s*/i, "")
+    .replace(/^Item\s+\d+\.\d+\s*[—\-\.]*\s*/i, "")
     .replace(/\.?\s*Filed with the SEC\.?/i, "")
     .replace(/\.?\s*The information set forth in\.?/i, "")
     .replace(/^Entry into a?\s*/i, "")
@@ -66,26 +66,26 @@ function localizeTitle(title: string, lang: "zh" | "en"): string {
 }
 
 const IMPACT_DOT: Record<string, string> = {
-  BULLISH: "bg-[#1B4332]",
-  BEARISH: "bg-[#7C1D1D]",
-  NEUTRAL: "bg-[#5C5C6E]",
+  BULLISH: "bg-up",
+  BEARISH: "bg-down",
+  NEUTRAL: "bg-faint",
 };
 
 const IMPACT_SUMMARY = {
   BULLISH: {
     label: "今日最强利多",
-    tone: "border-[#1B4332]/25 bg-[#1B4332]/[0.06] text-[#1B4332]",
-    badge: "bg-[#1B4332]/15 text-[#1B4332]",
+    tone: "border-up/25 bg-up/[0.06] text-up glow-up",
+    badge: "bg-up/15 text-up",
   },
   BEARISH: {
     label: "今日最强利空",
-    tone: "border-[#7C1D1D]/25 bg-[#7C1D1D]/[0.06] text-[#7C1D1D]",
-    badge: "bg-[#7C1D1D]/15 text-[#7C1D1D]",
+    tone: "border-down/25 bg-down/[0.06] text-down glow-down",
+    badge: "bg-down/15 text-down",
   },
   NEUTRAL: {
     label: "需观察",
-    tone: "border-[#B5882B]/30 bg-[#B5882B]/[0.07] text-[#8A681F]",
-    badge: "bg-[#B5882B]/15 text-[#8A681F]",
+    tone: "border-warn/25 bg-warn/[0.06] text-warn",
+    badge: "bg-warn/15 text-warn",
   },
 } as const;
 
@@ -173,41 +173,43 @@ export function EventsFeed({
 
   return (
     <div>
-      <div className="grid gap-3 border-b border-[#D4CCB8] py-4 sm:grid-cols-3">
+      <div className="grid gap-3 py-4 sm:grid-cols-3">
         {summaryItems.map(({ impact, item, config }) => (
-          <div key={impact} className={`rounded-lg border px-3 py-3 ${config.tone}`}>
+          <div key={impact} className={`rounded-xl border px-4 py-3.5 ${config.tone}`}>
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="font-mono text-[10px] uppercase tracking-[0.22em]">{config.label}</p>
-              <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${config.badge}`}>
+              <p className="font-mono text-xs uppercase tracking-[0.22em]">{config.label}</p>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-xs uppercase tracking-wider ${config.badge}`}>
                 {impact === "BULLISH" ? "多" : impact === "BEARISH" ? "空" : "观察"}
               </span>
             </div>
             {item ? (
               <div className="min-w-0 space-y-1">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="shrink-0 font-mono text-xs font-semibold tracking-wider">{item.ticker === "MARKET" ? "NEWS" : item.ticker}</span>
-                  <span className="truncate text-xs text-[#5C5C6E]">{EVENT_LABELS[item.type] ?? item.type}</span>
+                  <span className="shrink-0 font-mono text-xs font-semibold tracking-wider text-foreground">
+                    {item.ticker === "MARKET" ? "NEWS" : item.ticker}
+                  </span>
+                  <span className="truncate text-sm text-muted-foreground">{EVENT_LABELS[item.type] ?? item.type}</span>
                 </div>
-                <p className="line-clamp-2 text-xs leading-relaxed text-[#1A1A2E]">
+                <p className="line-clamp-2 text-sm leading-relaxed text-foreground/85">
                   {lang === "zh" && item.descriptionZh ? item.descriptionZh : item.description || localizeTitle(item.title, lang)}
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-[#5C5C6E]">暂无明显信号</p>
+              <p className="text-xs text-faint">暂无明显信号</p>
             )}
           </div>
         ))}
       </div>
 
-      <div className="border-b border-[#D4CCB8] py-4">
+      <div className="border-b border-border py-3">
         <div className="flex min-w-0 items-center gap-x-2">
           <div className="relative min-w-0 flex-1 overflow-hidden">
             {canScrollRight && (
               <>
-                <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#F5F1E8] to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-background to-transparent" />
                 <button
                   onClick={() => scrollFilters("right")}
-                  className="absolute right-0 top-1/2 z-20 -translate-y-1/2 rounded-full border border-[#D4CCB8] bg-[#F5F1E8]/95 p-1 text-[#5C5C6E] shadow-sm transition-colors hover:text-[#1A1A2E]"
+                  className="absolute right-0 top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 p-1 text-muted-foreground shadow-sm transition-colors hover:text-foreground"
                   aria-label="向右查看更多筛选"
                 >
                   <ChevronRight className="size-3.5" />
@@ -216,10 +218,10 @@ export function EventsFeed({
             )}
             {canScrollLeft && (
               <>
-                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[#F5F1E8] to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-background to-transparent" />
                 <button
                   onClick={() => scrollFilters("left")}
-                  className="absolute left-0 top-1/2 z-20 -translate-y-1/2 rounded-full border border-[#D4CCB8] bg-[#F5F1E8]/95 p-1 text-[#5C5C6E] shadow-sm transition-colors hover:text-[#1A1A2E]"
+                  className="absolute left-0 top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 p-1 text-muted-foreground shadow-sm transition-colors hover:text-foreground"
                   aria-label="向左查看更多筛选"
                 >
                   <ChevronLeft className="size-3.5" />
@@ -228,27 +230,27 @@ export function EventsFeed({
             )}
           <div
             ref={filterScrollRef}
-            className="flex gap-2 overflow-x-auto pb-3 pr-9 [scrollbar-width:thin] [scrollbar-color:#D4CCB8_transparent] sm:pr-8 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#D4CCB8] [&::-webkit-scrollbar-track]:bg-transparent"
+            className="flex gap-1.5 overflow-x-auto pb-3 pr-9 [scrollbar-width:thin] [scrollbar-color:#232e40_transparent] sm:pr-8 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#232e40] [&::-webkit-scrollbar-track]:bg-transparent"
             onScroll={updateScrollHints}
           >
             {filters.map((filter) => (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`shrink-0 whitespace-nowrap rounded px-3 py-1 font-mono text-[11px] uppercase tracking-wider transition-colors ${
+                className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors ${
                   activeFilter === filter
-                    ? "bg-[#1A1A2E] text-[#E8E3D8]"
-                    : "text-[#5C5C6E] hover:bg-[#EDE8DE] hover:text-[#1A1A2E]"
+                    ? "bg-accent font-semibold text-accent-foreground"
+                    : "border border-border bg-surface text-muted-foreground hover:border-faint/40 hover:text-foreground"
                 }`}
               >
                 {EVENT_LABELS[filter] ?? filter}
                 {filter !== "ALL" && filter !== "HIDE_INSIDER_SELL" && filter !== "MARKET_NEWS" && (
-                  <span className="ml-1 opacity-50">{events.filter((event) => event.type === filter).length}</span>
+                  <span className="ml-1 opacity-60">{events.filter((event) => event.type === filter).length}</span>
                 )}
               </button>
             ))}
             {canScrollRight && (
-              <div className="pointer-events-none mt-1 flex items-center justify-end gap-1 pr-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[#B5882B] sm:hidden">
+              <div className="pointer-events-none mt-1 flex items-center justify-end gap-1 pr-1 font-mono text-xs uppercase tracking-[0.18em] text-accent sm:hidden">
                 <MoveHorizontal className="size-3" />
                 Swipe
               </div>
@@ -257,7 +259,7 @@ export function EventsFeed({
           </div>
           <button
             onClick={() => setLang((value) => (value === "zh" ? "en" : "zh"))}
-            className="flex shrink-0 items-center gap-1.5 rounded px-3 py-1 font-mono text-[11px] text-[#5C5C6E] transition-colors hover:bg-[#EDE8DE] hover:text-[#1A1A2E]"
+            className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-faint/40 hover:text-foreground"
             title="切换语言 / Toggle language"
           >
             <Languages className="size-3.5" />
@@ -266,11 +268,11 @@ export function EventsFeed({
         </div>
       </div>
 
-      <div className="divide-y divide-[#D4CCB8]">
+      <div className="divide-y divide-border/70">
         {allItems.length === 0 && (
-          <div className="px-4 py-10 text-center">
-            <p className="font-display text-xl text-[#1A1A2E]">暂无符合条件的信号</p>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-[#5C5C6E]">
+          <div className="px-4 py-12 text-center">
+            <p className="font-display text-xl font-medium text-foreground">暂无符合条件的信号</p>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
               试试切换上方筛选，或等待下一轮事件同步后刷新。
             </p>
           </div>
@@ -282,18 +284,18 @@ export function EventsFeed({
           return (
             <div
               key={event.id ?? `${event.ticker}-${event.date}-${index}`}
-              className="group flex items-start gap-3 px-3 py-4 transition-colors hover:bg-[#EDE8DE] sm:gap-4 sm:px-4"
+              className="group flex items-start gap-3 rounded-lg px-3 py-3.5 transition-colors hover:bg-surface-2/60 sm:gap-4 sm:px-4"
             >
-              <div className="hidden w-24 shrink-0 pt-0.5 sm:block">
-                <p className="font-mono text-[11px] text-[#5C5C6E]">{event.date}</p>
+              <div className="hidden w-20 shrink-0 pt-0.5 sm:block">
+                <p className="num font-mono text-xs text-faint">{event.date}</p>
               </div>
-              <div className="hidden w-14 shrink-0 pt-0.5 sm:block">
+              <div className="hidden w-16 shrink-0 pt-0.5 sm:block">
                 {event.ticker === "MARKET" ? (
-                  <span className="font-mono text-xs font-medium tracking-wider text-[#B5882B]">NEWS</span>
+                  <span className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs font-semibold tracking-wider text-accent">NEWS</span>
                 ) : (
                   <Link
                     href={`/stock/${event.ticker}`}
-                    className="font-mono text-xs font-medium tracking-wider text-[#B5882B] hover:underline"
+                    className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs font-semibold tracking-wider text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     {event.ticker}
                   </Link>
@@ -302,49 +304,49 @@ export function EventsFeed({
               <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-1">
                 <div className="flex items-start justify-between gap-3 pb-0.5 sm:hidden">
                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <p className="font-mono text-[11px] text-[#5C5C6E]">{event.date}</p>
+                    <p className="num font-mono text-xs text-faint">{event.date}</p>
                     {event.ticker === "MARKET" ? (
-                      <span className="font-mono text-xs font-medium tracking-wider text-[#B5882B]">NEWS</span>
+                      <span className="font-mono text-xs font-semibold tracking-wider text-accent">NEWS</span>
                     ) : (
                       <Link
                         href={`/stock/${event.ticker}`}
-                        className="font-mono text-xs font-medium tracking-wider text-[#B5882B] hover:underline"
+                        className="font-mono text-xs font-semibold tracking-wider text-accent hover:underline"
                       >
                         {event.ticker}
                       </Link>
                     )}
                   </div>
                   <span
-                    className={`mt-1 size-2 shrink-0 rounded-full ${IMPACT_DOT[event.impact] ?? "bg-[#5C5C6E]"}`}
+                    className={`mt-1 size-2 shrink-0 rounded-full ${IMPACT_DOT[event.impact] ?? "bg-faint"}`}
                     aria-label={event.impact}
                     title={event.impact}
                   />
                 </div>
                 {showExecutive && (
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-[#5C5C6E]">
-                    <span className="rounded-full bg-[#EDE8DE] px-2 py-1 font-mono uppercase tracking-[0.18em] text-[10px] text-[#B5882B]">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="rounded-full border border-accent/25 bg-accent/10 px-2 py-0.5 font-mono text-xs uppercase tracking-[0.14em] text-accent">
                       {metadata.insiderName}
                     </span>
-                    {metadata.insiderTitle && <span className="min-w-0 break-words text-[11px]">{metadata.insiderTitle}</span>}
+                    {metadata.insiderTitle && <span className="min-w-0 break-words text-xs text-faint">{metadata.insiderTitle}</span>}
                   </div>
                 )}
-                <p className="break-words font-medium text-sm leading-snug text-[#1A1A2E]">
+                <p className="break-words text-base font-medium leading-snug text-foreground">
                   {localizeTitle(event.title, lang)}
                 </p>
                 {event.description && (
-                  <p className="line-clamp-2 text-xs leading-relaxed text-[#5C5C6E] sm:line-clamp-3" style={{ overflowWrap: "break-word" }}>
+                  <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground sm:line-clamp-3" style={{ overflowWrap: "break-word" }}>
                     {lang === "zh" && event.descriptionZh ? event.descriptionZh : event.description}
                   </p>
                 )}
               </div>
               <div className="flex shrink-0 flex-col items-end gap-2 pt-0.5">
                 <span
-                  className={`hidden rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider sm:inline-flex ${
+                  className={`hidden rounded-md px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wider sm:inline-flex ${
                     event.impact === "BULLISH"
-                      ? "bg-[#1B4332]/15 text-[#1B4332]"
+                      ? "bg-up/10 text-up"
                       : event.impact === "BEARISH"
-                      ? "bg-[#7C1D1D]/15 text-[#7C1D1D]"
-                      : "bg-[#5C5C6E]/10 text-[#5C5C6E]"
+                      ? "bg-down/10 text-down"
+                      : "bg-surface-2 text-faint"
                   }`}
                 >
                   {event.impact === "BULLISH" ? "多" : event.impact === "BEARISH" ? "空" : "中性"}
@@ -354,7 +356,7 @@ export function EventsFeed({
                     href={event.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center rounded p-1.5 text-[#B5882B] transition-colors hover:bg-[#D4CCB8]/30"
+                    className="flex items-center justify-center rounded-md p-1.5 text-faint transition-colors hover:bg-surface-2 hover:text-accent"
                     aria-label="Open source"
                   >
                     <ExternalLink className="size-3.5" />
