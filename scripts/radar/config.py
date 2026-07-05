@@ -1,7 +1,26 @@
 """Sector Radar configuration."""
 import os
+from pathlib import Path
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+
+def _load_dotenv() -> None:
+    """本地调试:从仓库根目录 .env / .env.local 加载环境变量(已设置的不覆盖)。"""
+    root = Path(__file__).resolve().parents[2]
+    for name in (".env", ".env.local"):
+        path = root / name
+        if not path.exists():
+            continue
+        for line in path.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip())
+
+
+_load_dotenv()
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
