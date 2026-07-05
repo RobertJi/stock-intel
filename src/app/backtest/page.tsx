@@ -105,7 +105,8 @@ function RateBar({ label, hit, miss, mixed }: { label: string; hit: number; miss
 }
 
 export default async function BacktestPage() {
-  const theses = await fetchBacktest();
+  // 构建期/数据库不可用时兜底为空,避免预渲染失败
+  const theses = await fetchBacktest().catch(() => [] as BacktestThesis[]);
   const now = Date.now();
 
   const allOutcomes: { thesis: BacktestThesis; outcome: ThesisOutcome }[] = [];
