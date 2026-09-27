@@ -17,20 +17,31 @@ def run(dry_run: bool = False, mock_signals: list[dict[str, Any]] | None = None)
     else:
         pending = db.get(
             "radar_signals",
-            f"select=id,title,content,source_kind&triage_status=eq.pending&order=created_at.asc&limit={config.TRIAGE_BATCH * 4}",
+            f"select=id,title,content,source_kind&triage_status=eq.pending&order=created_at.desc&limit={config.TRIAGE_BATCH * 4}",
         )
     if not pending:
         print("triage: nothing pending")
         return []
 
     results: list[dict[str, Any]] = []
+    failures = 0
+    batches = 0
     for i in range(0, len(pending), config.TRIAGE_BATCH):
         batch = pending[i : i + config.TRIAGE_BATCH]
+        batches += 1
         lines = [
             f'{j}. [{s["source_kind"]}] {s["title"]} | {(s.get("content") or "")[:150]}'
             for j, s in enumerate(batch)
         ]
-        verdicts = llm.chat_json(config.TRIAGE_MODEL, SYSTEM, "\n".join(lines))
+        try:
+            verdicts = llm.chat_json(config.TRIAGE_MODEL, SYSTEM, "\n".join(lines))
+        except Exception as e:  # noqa: BLE001
+            # 这一批留在 pending,下次再试;不拖垮其余批次
+            failures += 1
+            print(f"  triage batch {i} failed: {e}")
+            continue
+        if not isinstance(verdicts, list):
+            verdicts = (verdicts.get("items") or verdicts.get("results") or []) if isinstance(verdicts, dict) else []
         by_idx = {v.get("idx"): v for v in verdicts if isinstance(v, dict)}
         for j, sig in enumerate(batch):
             v = by_idx.get(j, {"verdict": "discard", "sectors": []})
@@ -43,6 +54,8 @@ def run(dry_run: bool = False, mock_signals: list[dict[str, Any]] | None = None)
                     f"id=eq.{sig['id']}",
                     {"triage_status": verdict, "triage_sectors": sectors},
                 )
+    if batches and failures == batches:
+        raise RuntimeError(f"triage: all {batches} batches failed")
     kept = sum(1 for r in results if r["verdict"] == "interesting")
     print(f"triage: {len(results)} processed, {kept} interesting")
     if dry_run:

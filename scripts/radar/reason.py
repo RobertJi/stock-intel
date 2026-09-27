@@ -33,7 +33,7 @@ def run(dry_run: bool = False, mock: dict[str, Any] | None = None) -> list[dict[
             "radar_signals",
             "select=id,title,content,source_kind,url,published_at"
             "&triage_status=eq.interesting&reason_status=eq.pending"
-            f"&order=created_at.asc&limit={config.REASON_MAX_PER_RUN}",
+            f"&order=created_at.desc&limit={config.REASON_MAX_PER_RUN}",
         )
         theses = db.get(
             "sector_theses",
@@ -47,8 +47,11 @@ def run(dry_run: bool = False, mock: dict[str, Any] | None = None) -> list[dict[
     known_thesis_ids = {t["id"] for t in theses}
     all_analyses: list[dict[str, Any]] = []
     chunk_size = config.REASON_CHUNK
+    chunk_failures = 0
+    chunks = 0
     for start in range(0, len(signals), chunk_size):
         chunk = signals[start : start + chunk_size]
+        chunks += 1
         # 每个分块都重新取论点上下文,分块间新建的论点也能被归属
         thesis_ctx = json.dumps(
             [{k: t[k] for k in ("id", "sector", "direction", "summary")} for t in theses],
@@ -62,8 +65,11 @@ def run(dry_run: bool = False, mock: dict[str, Any] | None = None) -> list[dict[
         try:
             analyses = llm.chat_json(config.REASON_MODEL, SYSTEM, user, max_tokens=8000)
         except Exception as e:  # noqa: BLE001
+            chunk_failures += 1
             print(f"  reason chunk failed ({start}-{start + len(chunk)}): {e}")
             continue
+        if isinstance(analyses, dict):
+            analyses = analyses.get("items") or analyses.get("results") or [analyses]
         all_analyses.extend(a for a in analyses if isinstance(a, dict))
 
         if dry_run:
@@ -85,6 +91,8 @@ def run(dry_run: bool = False, mock: dict[str, Any] | None = None) -> list[dict[
                 "select=id,sector,sector_zh,direction,summary,conviction&status=in.(forming,active,confirmed)",
             )
             known_thesis_ids = {t["id"] for t in theses}
+    if chunks and chunk_failures == chunks:
+        raise RuntimeError(f"reason: all {chunks} chunks failed")
     print(f"reason: {len(signals)} signals processed")
     return all_analyses
 

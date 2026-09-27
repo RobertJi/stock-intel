@@ -10,6 +10,7 @@ import {
 import { SignalPoints, SignalText } from "@/components/SignalText";
 import { themeAnchor } from "@/lib/anchors";
 import type { MarketReactionEntry, ThemeOverview, ThesisData } from "@/lib/db";
+import { fmtAgo, hoursSince } from "@/lib/utils";
 
 const STANCE_CONFIG = {
   bullish: { label: "整体看多", cls: "border-up/30 bg-up/10 text-up" },
@@ -187,13 +188,16 @@ export function ThesisPanel({
                 const reactions = marketRows(thesis.marketReaction);
                 const evidence = thesis.evidence.slice(0, 5);
                 const invalidate = thesis.invalidateConditions[0];
+                const evidenceAge = hoursSince(thesis.lastSignalAt);
+                const isStale = evidenceAge > 72;
 
                 return (
                   <article
                     key={thesis.id}
                     className={
                       "relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface px-5 py-4 transition-colors hover:border-faint/40 before:absolute before:inset-y-0 before:left-0 before:w-[3px] " +
-                      config.edge
+                      config.edge +
+                      (isStale ? " opacity-60 saturate-50" : "")
                     }
                   >
                     <div className="mb-3 flex items-start justify-between gap-3">
@@ -203,6 +207,12 @@ export function ThesisPanel({
                             {STATUS_LABEL[thesis.status] ?? thesis.status}
                           </span>
                         )}
+                        <p
+                          className={"mb-1 font-mono text-[11px] " + (isStale ? "text-down/80" : "text-faint")}
+                          title={thesis.lastSignalAt ?? undefined}
+                        >
+                          最后证据 {fmtAgo(thesis.lastSignalAt)}
+                        </p>
                         <Link href={`/thesis/${thesis.id}`}>
                           <h4 className="font-display text-xl font-semibold leading-tight tracking-tight text-foreground transition-colors hover:text-accent">
                             {thesis.sectorZh ?? thesis.sector}

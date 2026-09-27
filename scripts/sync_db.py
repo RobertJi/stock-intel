@@ -10,6 +10,7 @@ import requests
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
@@ -92,33 +93,32 @@ def log_sync(type_: str, status: str, message: str):
 
 
 def translate_to_chinese(text: str) -> str:
-    """Use OpenRouter to translate SEC filings to Chinese."""
-    if not OPENROUTER_API_KEY or not text or len(text.strip()) < 10:
+    """Translate SEC filings to Chinese. DeepSeek first, OpenRouter as fallback."""
+    if not text or len(text.strip()) < 10:
         return text
-    try:
-        resp = requests.post(
-            f"{OPENROUTER_BASE_URL}/chat/completions",
-            json={
-                "model": "deepseek/deepseek-chat",
-                "max_tokens": 300,
-                "messages": [{
-                    "role": "user",
-                    "content": f"将以下美股SEC公告翻译成简洁中文（80字以内），只返回翻译，不加解释：\n\n{text[:600]}"
-                }]
-            },
-            headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            timeout=30
-        )
-        choices = resp.json().get("choices", [])
-        if choices:
-            translated = choices[0].get("message", {}).get("content", "").strip()
-            if translated:
-                return translated
-    except Exception as e:
-        print(f"  translate error: {e}", file=sys.stderr)
+    prompt = f"将以下美股SEC公告翻译成简洁中文（80字以内），只返回翻译，不加解释：\n\n{text[:600]}"
+    endpoints = []
+    if DEEPSEEK_API_KEY:
+        endpoints.append(("https://api.deepseek.com/chat/completions", DEEPSEEK_API_KEY,
+                          {"model": "deepseek-flash", "thinking": {"type": "disabled"}}))
+    if OPENROUTER_API_KEY:
+        endpoints.append((f"{OPENROUTER_BASE_URL}/chat/completions", OPENROUTER_API_KEY,
+                          {"model": "deepseek/deepseek-chat"}))
+    for url, key, extra in endpoints:
+        try:
+            resp = requests.post(
+                url,
+                json={"max_tokens": 300, "messages": [{"role": "user", "content": prompt}], **extra},
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                timeout=30,
+            )
+            choices = resp.json().get("choices", [])
+            if choices:
+                translated = (choices[0].get("message", {}).get("content") or "").strip()
+                if translated:
+                    return translated
+        except Exception as e:
+            print(f"  translate error ({url}): {e}", file=sys.stderr)
     return text
 
 

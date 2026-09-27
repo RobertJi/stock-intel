@@ -26,17 +26,46 @@ SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN", "")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 
-# 设置了 REPLICATE_API_TOKEN 则优先走 Replicate,否则 OpenRouter
-LLM_PROVIDER = os.environ.get("RADAR_LLM_PROVIDER") or ("replicate" if REPLICATE_API_TOKEN else "openrouter")
+# 模型通道按顺序容灾:主通道失败(余额不足/超时/5xx)自动切到下一家。
+# RADAR_LLM_PROVIDER 可强制指定主通道;其余已配置 key 的通道作为备份。
+_AVAILABLE = [
+    name
+    for name, key in (
+        ("deepseek", DEEPSEEK_API_KEY),
+        ("openrouter", OPENROUTER_API_KEY),
+        ("replicate", REPLICATE_API_TOKEN),
+    )
+    if key
+]
+_PRIMARY = os.environ.get("RADAR_LLM_PROVIDER")
+LLM_PROVIDERS: list[str] = (
+    [_PRIMARY] + [p for p in _AVAILABLE if p != _PRIMARY] if _PRIMARY else _AVAILABLE
+)
+LLM_PROVIDER = LLM_PROVIDERS[0] if LLM_PROVIDERS else "deepseek"
 
-# 便宜模型做分诊,强模型做传导链推理(注意两家的模型 ID 命名不同)
-_DEFAULT_MODELS = {
+# 每家的 (分诊模型, 推理模型)。DeepSeek 的 API 模型 ID 是 deepseek-flash(即 V4.1-Flash)。
+PROVIDER_MODELS: dict[str, tuple[str, str]] = {
+    "deepseek": (
+        os.environ.get("DEEPSEEK_TRIAGE_MODEL", "deepseek-flash"),
+        os.environ.get("DEEPSEEK_REASON_MODEL", "deepseek-flash"),
+    ),
     "replicate": ("anthropic/claude-4.5-haiku", "anthropic/claude-4.5-sonnet"),
     "openrouter": ("anthropic/claude-haiku-4.5", "anthropic/claude-sonnet-4.5"),
 }
-TRIAGE_MODEL = os.environ.get("RADAR_TRIAGE_MODEL", _DEFAULT_MODELS[LLM_PROVIDER][0])
-REASON_MODEL = os.environ.get("RADAR_REASON_MODEL", _DEFAULT_MODELS[LLM_PROVIDER][1])
+# 逻辑档位:调用方只说要"triage"还是"reason",具体模型由通道决定
+TRIAGE_MODEL = "triage"
+REASON_MODEL = "reason"
+
+# 积压保护:超过该时长仍未处理的信号直接标记过期,不再消耗模型额度
+MAX_SIGNAL_AGE_HOURS = int(os.environ.get("RADAR_MAX_SIGNAL_AGE_HOURS", "48"))
+
+# 告警与心跳
+FEISHU_WEBHOOK_URL = os.environ.get("FEISHU_WEBHOOK_URL", "")
+HEALTHCHECK_PING_URL = os.environ.get("HEALTHCHECK_PING_URL", "")  # 如 healthchecks.io,外部死信开关
+STALE_ALERT_HOURS = int(os.environ.get("RADAR_STALE_ALERT_HOURS", "14"))
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
@@ -45,6 +74,8 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 ACTIVATE_CONVICTION = 55
 ACTIVATE_MIN_EVIDENCE = 2
 CONVICTION_JUMP_ALERT = 15
+JUMP_ALERT_MIN_CONVICTION = 60  # 信心分跳升只有在达到该水位时才推送
+ALERT_COOLDOWN_HOURS = 48  # 同一论点两次推送的最短间隔
 THESIS_EXPIRE_DAYS = 7
 
 # 分诊批大小 / 推理单次上限(控制成本)

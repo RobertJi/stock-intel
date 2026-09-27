@@ -4,22 +4,40 @@ on:
   schedule:
     # 半天级:01:15 UTC(北京 09:15,亚洲盘前)/ 13:15 UTC(北京 21:15,美股盘前)
     - cron: '15 1,13 * * *'
+    # 看门狗:每 3 小时检查一次心跳,超过 RADAR_STALE_ALERT_HOURS 没有成功运行就推送飞书
+    - cron: '45 */3 * * *'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Pipeline stage (all/collect/triage/reason/score/alert/outcome)'
+        description: 'Pipeline stage (all/collect/backlog/triage/reason/score/synthesize/alert/outcome/watchdog)'
         required: false
         default: 'all'
 
 concurrency:
-  group: sector-radar
+  group: sector-radar-${{ github.event.schedule == '45 */3 * * *' && 'watchdog' || 'run' }}
   cancel-in-progress: false
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+  FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+  FEISHU_WEBHOOK_SECRET: ${{ secrets.FEISHU_WEBHOOK_SECRET }}
+  HEALTHCHECK_PING_URL: ${{ secrets.HEALTHCHECK_PING_URL }}
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
 jobs:
   radar:
     name: Run Radar Pipeline
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '15 1,13 * * *'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: write # keepalive:防止仓库 60 天无提交后定时任务被 GitHub 自动禁用
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,10 +45,18 @@ jobs:
           python-version: '3.11'
       - run: pip install -r scripts/requirements.txt
       - run: python -m scripts.radar.run ${{ github.event.inputs.mode || 'all' }}
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      - uses: liskin/gh-workflow-keepalive@v1
+        if: always()
+
+  watchdog:
+    name: Heartbeat Watchdog
+    if: github.event.schedule == '45 */3 * * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - run: python -m scripts.radar.run watchdog

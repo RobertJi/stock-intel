@@ -167,9 +167,18 @@ def _maybe_alert(
     kind = None
     if old_status == "forming" and new_status == "active":
         kind = "activated"
-    elif conviction - old_conviction >= config.CONVICTION_JUMP_ALERT and new_status in ("active", "confirmed"):
+    elif (
+        conviction - old_conviction >= config.CONVICTION_JUMP_ALERT
+        and conviction >= config.JUMP_ALERT_MIN_CONVICTION
+        and new_status in ("active", "confirmed")
+    ):
         kind = "conviction_jump"
     if not kind:
+        return
+    # 冷却:同一论点 ALERT_COOLDOWN_HOURS 内只推一次(v2 平均每天 20 条,77% 是信心分抖动)
+    since = (datetime.now(timezone.utc) - timedelta(hours=config.ALERT_COOLDOWN_HOURS)).isoformat()
+    recent = db.get("radar_alerts", f"select=id&thesis_id=eq.{thesis['id']}&created_at=gte.{since}&limit=1")
+    if recent:
         return
     label = thesis.get("sector_zh") or thesis["sector"]
     arrow = "看多" if thesis["direction"] == "bullish" else "看空"
