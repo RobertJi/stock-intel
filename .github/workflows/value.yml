@@ -1,0 +1,41 @@
+name: Value Pipeline
+
+on:
+  schedule:
+    # 美股收盘后:21:40 UTC(北京 05:40),周一到周五
+    - cron: '40 21 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Only these tickers (space separated); empty = whole universe'
+        required: false
+        default: ''
+
+concurrency:
+  group: value-pipeline
+  cancel-in-progress: false
+
+jobs:
+  value:
+    name: SEC fundamentals → valuation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: write # keepalive
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r scripts/requirements.txt
+      - run: python -m scripts.value.run ${{ github.event.inputs.tickers }}
+      - uses: liskin/gh-workflow-keepalive@v1
+        if: always()
