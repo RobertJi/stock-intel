@@ -1,6 +1,6 @@
 import { isAuthenticated } from "@/lib/auth";
 import { getWatchlist } from "@/lib/db";
-import { LoginForm } from "./LoginForm";
+import { LoginForm } from "@/components/auth/LoginForm";
 import { WatchlistManager } from "./WatchlistManager";
 
 export default async function SettingsPage() {

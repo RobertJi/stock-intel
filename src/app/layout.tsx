@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 
-import { Sidebar } from "@/components/Sidebar";
-
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -40,12 +38,7 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} ${inter.variable}`}
       >
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="min-w-0 flex-1 px-5 py-6 lg:px-10 lg:py-8">
-            <div className="mx-auto max-w-[1600px]">{children}</div>
-          </main>
-        </div>
+        {children}
       </body>
     </html>
   );
