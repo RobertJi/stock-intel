@@ -16,16 +16,23 @@ import requests
 from . import config
 
 
+def configured() -> bool:
+    return bool(config.FEISHU_WEBHOOK_URL or (config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID))
+
+
 def send(text: str) -> bool:
-    """Send a plain-text message to every configured channel. True if any succeeded."""
+    """Send a plain-text message to every configured channel. True if any succeeded.
+
+    No channel configured → False, so callers keep the message pending instead of
+    silently marking it delivered.
+    """
     ok = False
     if config.FEISHU_WEBHOOK_URL:
         ok = _feishu(text) or ok
     if config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID:
         ok = _telegram(text) or ok
-    if not config.FEISHU_WEBHOOK_URL and not config.TELEGRAM_BOT_TOKEN:
+    if not configured():
         print(f"  notify (no channel configured): {text[:160]}")
-        return True
     return ok
 
 
