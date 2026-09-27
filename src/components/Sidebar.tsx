@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Briefcase, CalendarClock, Crosshair, Radar, Rss, Settings } from "lucide-react";
-import { getThemeNav, type ThemeNavItem } from "@/lib/db";
+import { getPipelineHealth, getThemeNav, type PipelineHealth, type ThemeNavItem } from "@/lib/db";
+import { fmtAgo, freshnessLevel } from "@/lib/utils";
 import { themeAnchor } from "@/lib/anchors";
 
 const nav = [
@@ -13,11 +14,16 @@ const nav = [
 
 export async function Sidebar() {
   let themes: ThemeNavItem[] = [];
-  try {
-    themes = await getThemeNav();
-  } catch {
-    // 数据库暂不可用时导航退化为纯链接
-  }
+  let health: PipelineHealth | null = null;
+  const [navResult, healthResult] = await Promise.allSettled([getThemeNav(), getPipelineHealth()]);
+  if (navResult.status === "fulfilled") themes = navResult.value;
+  if (healthResult.status === "fulfilled") health = healthResult.value;
+  const level = freshnessLevel(health?.lastSuccessAt);
+  const tone = {
+    fresh: { box: "border-up/20 bg-up/[0.06]", dot: "bg-up", text: "text-up", label: "情报已更新" },
+    lagging: { box: "border-warn/25 bg-warn/[0.06]", dot: "bg-warn", text: "text-warn", label: "情报滞后" },
+    stale: { box: "border-down/30 bg-down/[0.08]", dot: "bg-down", text: "text-down", label: "情报管道停摆" },
+  }[level];
 
   return (
     <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-border bg-surface/60 px-4 pb-6 pt-8 backdrop-blur lg:flex">
@@ -35,14 +41,23 @@ export async function Sidebar() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-md border border-up/20 bg-up/[0.06] px-2.5 py-1.5">
-          <span className="relative flex size-1.5">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-up opacity-60" />
-            <span className="relative inline-flex size-1.5 rounded-full bg-up" />
-          </span>
-          <span className="font-mono text-xs uppercase tracking-[0.2em] text-up">
-            Live · 60s
-          </span>
+        <div
+          className={"rounded-md border px-2.5 py-1.5 " + tone.box}
+          title={health?.lastError ? `最近一次运行报错:${health.lastError}` : undefined}
+        >
+          <div className="flex items-center gap-2">
+            <span className="relative flex size-1.5">
+              {level === "fresh" && (
+                <span className={"absolute inline-flex size-full animate-ping rounded-full opacity-60 " + tone.dot} />
+              )}
+              <span className={"relative inline-flex size-1.5 rounded-full " + tone.dot} />
+            </span>
+            <span className={"text-xs font-medium " + tone.text}>{tone.label}</span>
+          </div>
+          <p className="mt-0.5 pl-3.5 font-mono text-[11px] text-faint">
+            {health?.lastSuccessAt ? `${fmtAgo(health.lastSuccessAt)}` : "无运行记录"}
+            {health?.lastStatus && health.lastStatus !== "ok" ? ` · 上次${health.lastStatus === "failed" ? "失败" : "部分失败"}` : ""}
+          </p>
         </div>
       </div>
 

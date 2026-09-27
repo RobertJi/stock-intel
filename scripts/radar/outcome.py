@@ -6,6 +6,7 @@ Verdict: avg mapped-instrument return in thesis direction >= +2% -> hit, <= -2% 
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 from typing import Any
 
 import requests
@@ -81,20 +82,26 @@ def _track(thesis: dict[str, Any], dry_run: bool) -> int:
     return written
 
 
+@lru_cache(maxsize=1024)
+def _series(symbol: str) -> tuple[tuple[datetime, float], ...]:
+    """6 个月日线,按标的缓存:一次运行里同一标的只拉一次行情。"""
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=6mo&interval=1d"
+    r = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+    r.raise_for_status()
+    result = r.json()["chart"]["result"][0]
+    timestamps = result.get("timestamp") or []
+    closes = result["indicators"]["quote"][0]["close"]
+    return tuple(
+        (datetime.fromtimestamp(ts, tz=timezone.utc), c)
+        for ts, c in zip(timestamps, closes)
+        if c is not None
+    )
+
+
 def _return_between(symbol: str, start: datetime, end: datetime) -> float | None:
     """Close-to-close return from nearest trading day <= start to nearest <= end."""
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=3mo&interval=1d"
-        r = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
-        r.raise_for_status()
-        result = r.json()["chart"]["result"][0]
-        timestamps = result.get("timestamp") or []
-        closes = result["indicators"]["quote"][0]["close"]
-        series = [
-            (datetime.fromtimestamp(ts, tz=timezone.utc), c)
-            for ts, c in zip(timestamps, closes)
-            if c is not None
-        ]
+        series = list(_series(symbol))
         if len(series) < 2:
             return None
         start_close = _close_at_or_before(series, start) or series[0][1]

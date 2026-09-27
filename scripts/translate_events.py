@@ -4,11 +4,11 @@ Batch translate event descriptions to Chinese.
 Run separately: python3 scripts/translate_events.py
 Designed to be resilient: skips failures, retries later.
 """
-import sqlite3, sys, time, json
+import os, sqlite3, sys, time, json
 import requests
 
 DB_PATH = "/home/claw/dev/stock-intel/app/data/stock-intel.db"
-MINIMAX_KEY = "sk-api-dWCNRdrMDAckdpmjELg5cfoNrM6LrfDGSqeIk0aXIb09qfPZrsQAF7uO-cTf7py_VvE9fGZOP_2RBboQyVrBQRouvlzbgp79FHXjOMYCxlp55aF6AkCSHdA"
+MINIMAX_KEY = os.environ.get("MINIMAX_API_KEY", "")  # 不要把密钥写进代码:此仓库是公开的
 MINIMAX_URL = "https://api.minimax.io/anthropic/v1/messages"
 
 def translate(text: str, retries=2) -> str:

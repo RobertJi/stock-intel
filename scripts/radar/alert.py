@@ -1,9 +1,7 @@
-"""Deliver undelivered alerts via Telegram (if configured)."""
+"""Deliver undelivered thesis alerts via notify (Feishu / Telegram)."""
 from __future__ import annotations
 
-import requests
-
-from . import config, db
+from . import db, notify
 
 
 def run(dry_run: bool = False) -> None:
@@ -15,20 +13,6 @@ def run(dry_run: bool = False) -> None:
         if dry_run:
             print(f"  would send: {a['message'][:120]}")
             continue
-        ok = _send_telegram(a["message"]) if config.TELEGRAM_BOT_TOKEN else True
-        if ok:
+        if notify.send(a["message"]):
             db.update("radar_alerts", f"id=eq.{a['id']}", {"delivered": True})
     print(f"alert: {len(alerts)} processed")
-
-
-def _send_telegram(message: str) -> bool:
-    try:
-        r = requests.post(
-            f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage",
-            json={"chat_id": config.TELEGRAM_CHAT_ID, "text": message},
-            timeout=15,
-        )
-        return r.ok
-    except Exception as e:  # noqa: BLE001
-        print(f"  telegram send failed: {e}")
-        return False

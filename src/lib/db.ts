@@ -730,3 +730,45 @@ export async function getOutcomesForThesis(id: string): Promise<ThesisOutcome[]>
     .map((r) => parseOutcomeRow(r))
     .sort((a, b) => order.indexOf(a.horizon) - order.indexOf(b.horizon))
 }
+
+// ---------------------------------------------------------------------------
+// 管道健康度:页面据此显示真实的数据新鲜度,不再展示假的 "LIVE"
+// ---------------------------------------------------------------------------
+
+export type PipelineHealth = {
+  /** 最近一次成功(或部分成功)产出情报的时间 */
+  lastSuccessAt: string | null
+  /** 最近一次运行的状态 ok | partial | failed;无心跳表时为 null */
+  lastStatus: string | null
+  lastRunAt: string | null
+  lastError: string | null
+  /** heartbeat = 来自 pipeline_runs;evidence = 迁移前的兜底(最新一条论点证据时间) */
+  source: 'heartbeat' | 'evidence' | 'none'
+}
+
+export async function getPipelineHealth(): Promise<PipelineHealth> {
+  const runs = await supabase
+    .from('pipeline_runs')
+    .select('finished_at,status,error')
+    .order('finished_at', { ascending: false })
+    .limit(20)
+  if (!runs.error && runs.data && runs.data.length > 0) {
+    const latest = runs.data[0]
+    const success = runs.data.find((r) => r.status === 'ok' || r.status === 'partial')
+    return {
+      lastSuccessAt: (success?.finished_at as string) ?? null,
+      lastStatus: latest.status as string,
+      lastRunAt: latest.finished_at as string,
+      lastError: (latest.error as string) ?? null,
+      source: 'heartbeat',
+    }
+  }
+  // 心跳表尚未建立(migration 007 未执行)时,用最新一条论点证据的时间兜底
+  const ev = await supabase
+    .from('thesis_signals')
+    .select('created_at')
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const last = (ev.data?.[0]?.created_at as string) ?? null
+  return { lastSuccessAt: last, lastStatus: null, lastRunAt: null, lastError: null, source: last ? 'evidence' : 'none' }
+}

@@ -1,4 +1,6 @@
 import { fetchEvents, fetchTheses, fetchThemeOverviews } from "@/lib/server-data";
+import { getPipelineHealth } from "@/lib/db";
+import { fmtAgo, freshnessLevel } from "@/lib/utils";
 import { EventsFeed } from "@/components/EventsFeed";
 import { ThesisPanel } from "@/components/ThesisPanel";
 import { AlertTriangle, DatabaseZap } from "lucide-react";
@@ -6,11 +8,14 @@ import { AlertTriangle, DatabaseZap } from "lucide-react";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [eventsResult, thesesResult, overviewsResult] = await Promise.allSettled([
+  const [eventsResult, thesesResult, overviewsResult, healthResult] = await Promise.allSettled([
     fetchEvents(),
     fetchTheses(),
     fetchThemeOverviews(),
+    getPipelineHealth(),
   ]);
+  const health = healthResult.status === "fulfilled" ? healthResult.value : null;
+  const freshness = freshnessLevel(health?.lastSuccessAt);
 
   const events = eventsResult.status === "fulfilled" ? eventsResult.value : [];
   const theses = thesesResult.status === "fulfilled" ? thesesResult.value : [];
@@ -62,6 +67,28 @@ export default async function Home() {
           )}
         </div>
       </div>
+
+      {freshness !== "fresh" && (
+        <div
+          className={
+            "mb-6 rounded-xl border px-4 py-4 " +
+            (freshness === "stale" ? "border-down/30 bg-down/[0.06]" : "border-warn/25 bg-warn/[0.06]")
+          }
+        >
+          <div className="flex items-start gap-3">
+            <AlertTriangle className={"mt-0.5 size-4 shrink-0 " + (freshness === "stale" ? "text-down" : "text-warn")} />
+            <div>
+              <p className={"text-sm font-semibold " + (freshness === "stale" ? "text-down" : "text-warn")}>
+                {freshness === "stale" ? "情报管道已停摆" : "情报更新滞后"} · 最后一次产出 {fmtAgo(health?.lastSuccessAt)}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                下面的论点、信心分和市场反应都停留在那个时间点，不代表当前市场。
+                {health?.lastError ? ` 最近一次报错：${health.lastError.slice(0, 160)}` : ""}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {hasDataError && (
         <div className="mb-6 rounded-xl border border-warn/25 bg-warn/[0.06] px-4 py-4">
