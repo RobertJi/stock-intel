@@ -176,7 +176,7 @@ def _maybe_alert(
     if not kind:
         return
     # 冷却:同一论点 ALERT_COOLDOWN_HOURS 内只推一次(v2 平均每天 20 条,77% 是信心分抖动)
-    since = (datetime.now(timezone.utc) - timedelta(hours=config.ALERT_COOLDOWN_HOURS)).isoformat()
+    since = (datetime.now(timezone.utc) - timedelta(hours=config.ALERT_COOLDOWN_HOURS)).strftime("%Y-%m-%dT%H:%M:%SZ")
     recent = db.get("radar_alerts", f"select=id&thesis_id=eq.{thesis['id']}&created_at=gte.{since}&limit=1")
     if recent:
         return
