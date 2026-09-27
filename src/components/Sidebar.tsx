@@ -1,15 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Briefcase, CalendarClock, Crosshair, Radar, Rss, Settings } from "lucide-react";
+import { Briefcase, CalendarClock, Crosshair, Landmark, Radar, Settings } from "lucide-react";
 import { getPipelineHealth, getThemeNav, type PipelineHealth, type ThemeNavItem } from "@/lib/db";
 import { fmtAgo, freshnessLevel } from "@/lib/utils";
 import { themeAnchor } from "@/lib/anchors";
 
 const nav = [
-  { label: "持仓驾驶舱", en: "Book", href: "/portfolio", icon: Briefcase },
+  { label: "持仓录入", en: "Book", href: "/portfolio", icon: Briefcase },
   { label: "财报日历", en: "Earnings", href: "/earnings", icon: CalendarClock },
-  { label: "信息流", en: "Feed", href: "/#information", icon: Rss },
-  { label: "判断回溯", en: "Record", href: "/backtest", icon: Crosshair },
+  { label: "雷达回溯", en: "Record", href: "/backtest", icon: Crosshair },
 ];
 
 export async function Sidebar() {
@@ -63,11 +62,21 @@ export async function Sidebar() {
 
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pb-2">
         <Link
-          href="/#radar"
+          href="/"
+          className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+        >
+          <Landmark className="size-4 text-faint transition-colors group-hover:text-accent" />
+          <span className="flex-1">组合与观察池</span>
+          <span className="font-mono text-[11px] uppercase tracking-widest text-faint">
+            Value
+          </span>
+        </Link>
+        <Link
+          href="/radar"
           className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
         >
           <Radar className="size-4 text-faint transition-colors group-hover:text-accent" />
-          <span className="flex-1">板块雷达</span>
+          <span className="flex-1">板块雷达 · 选题</span>
           <span className="font-mono text-[11px] uppercase tracking-widest text-faint">
             Radar
           </span>
@@ -79,7 +88,7 @@ export async function Sidebar() {
             {themes.map(({ theme, bull, bear }) => (
               <Link
                 key={theme}
-                href={`/#${themeAnchor(theme)}`}
+                href={`/radar#${themeAnchor(theme)}`}
                 className="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
               >
                 <span className="truncate">{theme}</span>

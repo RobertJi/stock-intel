@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string } = {}) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,6 +19,11 @@ export function LoginForm() {
       body: JSON.stringify({ password }),
     });
     if (res.ok) {
+      if (next) {
+        // 整页跳转:让中间件在新请求里读到刚写入的登录 cookie
+        window.location.assign(next);
+        return;
+      }
       router.refresh();
     } else {
       setError("密码错误");
@@ -30,7 +35,7 @@ export function LoginForm() {
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="w-full max-w-xs rounded-2xl border border-border bg-surface p-6">
         <p className="mb-2 font-mono text-xs uppercase tracking-[0.3em] text-accent">
-          Settings
+          Stock Intel
         </p>
         <h1 className="mb-8 font-display text-2xl font-semibold tracking-tight text-foreground">验证身份</h1>
         <form onSubmit={handleSubmit} className="space-y-3">
