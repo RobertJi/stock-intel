@@ -95,19 +95,19 @@ export default async function ValueHome() {
 
       {supported.length > 0 && (
         <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-          <table className="w-full min-w-[1100px] text-sm">
+          <table className="w-full min-w-[1040px] text-sm">
             <thead>
               <tr className="whitespace-nowrap border-b border-border text-left text-xs text-faint">
                 <th className="px-4 py-3 font-normal">公司</th>
-                <th className="px-3 py-3 text-right font-normal">现价</th>
-                <th className="px-3 py-3 font-normal">价值区间（熊 · 基准 · 牛 / 买入价）</th>
-                <th className="px-3 py-3 font-normal">状态</th>
-                <th className="px-3 py-3 text-right font-normal" title="按基准情景、以现价买入的隐含年化回报">隐含回报</th>
-                <th className="px-3 py-3 text-right font-normal" title="现价隐含的前 5 年增长 vs 过去 5 年营收增长">隐含 / 历史增长</th>
-                <th className="px-3 py-3 text-center font-normal">质量</th>
-                <th className="px-3 py-3 text-center font-normal">估值</th>
-                <th className="px-3 py-3 font-normal" title="ROIC 持续性代理：近 10 年 ROIC ≥ 10% 的年数占比与中位数">护城河</th>
-                <th className="px-3 py-3 font-normal">排雷</th>
+                <th className="px-2.5 py-3 text-right font-normal">现价</th>
+                <th className="px-2.5 py-3 font-normal">价值区间（熊 · 基准 · 牛 / 买入价）</th>
+                <th className="px-2.5 py-3 font-normal">状态</th>
+                <th className="px-2.5 py-3 text-right font-normal" title="按基准情景、以现价买入的隐含年化回报">隐含回报</th>
+                <th className="px-2.5 py-3 text-right font-normal" title="现价隐含的前 5 年增长 vs 过去 5 年营收增长">隐含 / 历史增长</th>
+                <th className="px-2.5 py-3 text-center font-normal">质量</th>
+                <th className="px-2.5 py-3 text-center font-normal">估值</th>
+                <th className="px-2.5 py-3 font-normal" title="ROIC 持续性代理：近 10 年 ROIC ≥ 10% 的年数占比与中位数">护城河</th>
+                <th className="px-2.5 py-3 font-normal">排雷</th>
               </tr>
             </thead>
             <tbody>
@@ -124,19 +124,19 @@ export default async function ValueHome() {
                         {held.has(r.ticker) && (
                           <span className="ml-2 rounded bg-accent/15 px-1.5 py-0.5 text-[11px] text-accent">持有</span>
                         )}
-                        <span className="mt-0.5 block max-w-44 truncate text-xs text-muted-foreground">{r.name}</span>
+                        <span className="mt-0.5 block max-w-40 truncate text-xs text-muted-foreground">{r.name}</span>
                       </Link>
                     </td>
-                    <td className="num px-3 py-3 text-right font-mono">{fmtUsd(r.price)}</td>
-                    <td className="px-3 py-3">
+                    <td className="num px-2.5 py-3 text-right font-mono">{fmtUsd(r.price)}</td>
+                    <td className="px-2.5 py-3">
                       <ValueRangeBar price={r.price} bear={v.bear} base={v.base} bull={v.bull} buy={v.buy_price} />
                       {v.base != null && (
                         <p className="num mt-0.5 whitespace-nowrap font-mono text-[11px] text-faint">
-                          基准 {fmtUsd(v.base)} · 买入 {fmtUsd(v.buy_price)} · 不确定性{v.uncertainty_label}
+                          基准 {fmtUsd(v.base)} · 买入 {fmtUsd(v.buy_price)}
                         </p>
                       )}
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-2.5 py-3">
                       {zone ? (
                         <span className={"whitespace-nowrap rounded-md border px-2 py-0.5 text-xs " + TONE[zone.tone]} title={zone.desc}>
                           {zone.label}
@@ -145,23 +145,23 @@ export default async function ValueHome() {
                         <span className="text-xs text-faint">估值暂缺</span>
                       )}
                     </td>
-                    <td className="num px-3 py-3 text-right font-mono">
+                    <td className="num px-2.5 py-3 text-right font-mono">
                       <span className={(v.implied_return ?? 0) >= 0.1 ? "text-up" : (v.implied_return ?? 0) < 0.06 ? "text-down" : ""}>
                         {fmtPct(v.implied_return)}
                       </span>
                     </td>
-                    <td className="num px-3 py-3 text-right font-mono text-xs">
+                    <td className="num whitespace-nowrap px-2.5 py-3 text-right font-mono text-xs">
                       <span className="text-foreground">{fmtPct(v.implied_growth)}</span>
                       <span className="text-faint"> / {fmtPct(a.revenue_cagr)}</span>
                     </td>
-                    <td className="px-3 py-3 text-center">
+                    <td className="px-2.5 py-3 text-center">
                       <Score {...a.quality_score} />
                     </td>
-                    <td className="px-3 py-3 text-center">
+                    <td className="px-2.5 py-3 text-center">
                       <Score {...a.value_score} />
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-xs text-muted-foreground">{MOAT_LABEL[a.moat_proxy]}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-xs">
+                    <td className="whitespace-nowrap px-2.5 py-3 text-xs text-muted-foreground">{MOAT_LABEL[a.moat_proxy]}</td>
+                    <td className="whitespace-nowrap px-2.5 py-3 text-xs">
                       {flags.length ? (
                         <span className="text-warn" title={flags.map((f) => f.label).join("、")}>
                           {flags.length} 项

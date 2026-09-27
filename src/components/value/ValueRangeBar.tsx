@@ -44,7 +44,7 @@ export function ValueRangeBar({
   const lg = size === "lg";
 
   return (
-    <div className={lg ? "w-full" : "w-56"}>
+    <div className={lg ? "w-full" : "w-48"}>
       <div className={"relative " + (lg ? "h-24" : "h-6")}>
         {/* 情景区间 */}
         <div
