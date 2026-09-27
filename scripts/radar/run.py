@@ -1,7 +1,7 @@
 """Sector Radar pipeline runner.
 
 Usage:
-    python -m scripts.radar.run [collect|triage|reason|score|synthesize|alert|outcome|all|watchdog] [--dry-run]
+    python -m scripts.radar.run [collect|triage|reason|score|synthesize|alert|outcome|all|watchdog|ping] [--dry-run]
 
 Every stage is isolated: one failing stage (e.g. an LLM account out of credit) no longer
 aborts the others. Each `all` run writes a heartbeat row to `pipeline_runs`, notifies on
@@ -166,10 +166,14 @@ def main() -> None:
         raise SystemExit(run_all(dry_run))
     if mode == "watchdog":
         watchdog()
+    elif mode == "ping":
+        ok = notify.send("✅ stock-intel 推送测试:通道已连通。之后的论点告警、管道故障和看门狗提醒都会发到这里。")
+        print("ping:", "delivered" if ok else "FAILED (check TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID)")
+        raise SystemExit(0 if ok else 1)
     elif mode in STEPS:
         STEPS[mode](dry_run)
     else:
-        raise SystemExit(f"unknown mode: {mode} (expected {'/'.join(STEPS)}/all/watchdog)")
+        raise SystemExit(f"unknown mode: {mode} (expected {'/'.join(STEPS)}/all/watchdog/ping)")
 
 
 if __name__ == "__main__":

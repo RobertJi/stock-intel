@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Pipeline stage (all/collect/backlog/triage/reason/score/synthesize/alert/outcome/watchdog)'
+        description: 'Pipeline stage (all/collect/backlog/triage/reason/score/synthesize/alert/outcome/watchdog/ping)'
         required: false
         default: 'all'
 
