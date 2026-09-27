@@ -50,7 +50,7 @@ def collect(dry_run: bool = False) -> dict[str, Any]:
 def expire_backlog(dry_run: bool = False) -> dict[str, Any]:
     """Signals older than MAX_SIGNAL_AGE_HOURS that were never processed are stale news:
     mark them instead of spending model budget on them (fixes the 3,970-signal backlog)."""
-    cutoff = (datetime.now(timezone.utc) - timedelta(hours=config.MAX_SIGNAL_AGE_HOURS)).isoformat()
+    cutoff = _ts(datetime.now(timezone.utc) - timedelta(hours=config.MAX_SIGNAL_AGE_HOURS))
     if dry_run:
         return {"cutoff": cutoff}
     a = db.update("radar_signals", f"triage_status=eq.pending&created_at=lt.{cutoff}&select=id", {"triage_status": "stale"})
@@ -60,7 +60,7 @@ def expire_backlog(dry_run: bool = False) -> dict[str, Any]:
         {"reason_status": "skipped"},
     )
     # 超过 THESIS_EXPIRE_DAYS 没有新证据的论点一次性过期,避免 score 阶段逐个去拉行情
-    thesis_cutoff = (datetime.now(timezone.utc) - timedelta(days=config.THESIS_EXPIRE_DAYS)).isoformat()
+    thesis_cutoff = _ts(datetime.now(timezone.utc) - timedelta(days=config.THESIS_EXPIRE_DAYS))
     c = db.update(
         "sector_theses",
         f"status=in.(forming,active,confirmed)&last_signal_at=lt.{thesis_cutoff}&select=id",
@@ -68,6 +68,11 @@ def expire_backlog(dry_run: bool = False) -> dict[str, Any]:
     )
     print(f"backlog: {len(a)} pending → stale, {len(b)} unreasoned → skipped, {len(c)} theses → expired")
     return {"triage_stale": len(a), "reason_skipped": len(b), "theses_expired": len(c)}
+
+
+def _ts(dt: datetime) -> str:
+    """URL 查询里用的时间:必须是 Z 结尾,"+00:00" 里的 + 会被当成空格导致 400。"""
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def watchdog() -> None:
