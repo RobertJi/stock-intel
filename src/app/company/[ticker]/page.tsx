@@ -8,6 +8,7 @@ import {
   fmtBig,
   fmtCheck,
   fmtPct,
+  fmtRoic,
   fmtSignedPct,
   fmtUsd,
   MOAT_LABEL,
@@ -100,7 +101,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
           {zone && <span className={"rounded-md border px-2.5 py-1 text-sm font-medium " + TONE[zone.tone]}>{zone.label}</span>}
           <span className="text-sm text-muted-foreground">{zone?.desc}</span>
           <span className="ml-auto text-xs text-faint">
-            不确定性 {v.uncertainty_label ?? "—"} · 要求折扣 {v.required_discount != null ? fmtPct(v.required_discount, 0) : "—"} · 护城河 {MOAT_LABEL[a.moat_proxy]}
+            不确定性 {v.uncertainty_label ?? "—"} · 要求折扣 {v.required_discount != null ? fmtPct(v.required_discount, 0) : "—"} · 护城河（ROIC 持续性代理）{MOAT_LABEL[a.moat_proxy]}
           </span>
         </div>
         {v.base != null ? (
@@ -235,7 +236,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
                   <td className="py-2">{fmtPct(y.op_margin)}</td>
                   <td className="py-2">{fmtBig(y.owner_earnings)}</td>
                   <td className="py-2">{fmtPct(y.oe_margin)}</td>
-                  <td className="py-2">{fmtPct(y.roic)}</td>
+                  <td className="py-2">{fmtRoic(y.roic)}</td>
                   <td className="py-2">{y.diluted_shares ? `${(y.diluted_shares / 1e9).toFixed(2)}B` : "—"}</td>
                   <td className="py-2">{fmtBig(y.net_debt)}</td>
                 </tr>

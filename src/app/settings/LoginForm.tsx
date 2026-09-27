@@ -20,7 +20,9 @@ export function LoginForm({ next }: { next?: string } = {}) {
     });
     if (res.ok) {
       if (next) {
-        router.replace(next);
+        // 整页跳转:让中间件在新请求里读到刚写入的登录 cookie
+        window.location.assign(next);
+        return;
       }
       router.refresh();
     } else {

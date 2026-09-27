@@ -220,6 +220,12 @@ export function fmtPct(v: number | null | undefined, digits = 1): string {
   return `${(v * 100).toFixed(digits)}%`;
 }
 
+/** ROIC:现金很多的轻资产公司,扣现金后投入资本很小,比率会到几百%;超过 100% 统一显示为 >100% */
+export function fmtRoic(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return "—";
+  return v > 1 ? ">100%" : fmtPct(v);
+}
+
 export function fmtSignedPct(v: number | null | undefined, digits = 1): string {
   if (v == null || !Number.isFinite(v)) return "—";
   return `${v >= 0 ? "+" : "−"}${Math.abs(v * 100).toFixed(digits)}%`;
@@ -242,6 +248,7 @@ export function fmtBig(v: number | null | undefined): string {
 
 export function fmtCheck(c: Check): string {
   if (c.value == null) return "—";
+  if (c.key.startsWith("roic")) return fmtRoic(c.value);
   if (c.fmt === "pct") return fmtPct(c.value);
   if (c.fmt === "pp") return `${(c.value * 100).toFixed(1)} pp`;
   if (c.key === "leverage" && c.value < 0) return "净现金";
@@ -256,8 +263,8 @@ export const ZONE_LABEL: Record<string, { label: string; tone: string; desc: str
 };
 
 export const MOAT_LABEL: Record<string, string> = {
-  wide: "宽（数据代理）",
-  narrow: "窄（数据代理）",
-  none: "无明显迹象",
+  wide: "宽",
+  narrow: "窄",
+  none: "无迹象",
   unknown: "数据不足",
 };
