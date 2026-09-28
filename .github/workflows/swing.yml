@@ -1,0 +1,51 @@
+name: Swing Pipeline
+
+on:
+  schedule:
+    # 美股开盘前出信号:12:30 UTC(美东夏令 8:30 / 冬令 7:30,北京 20:30)
+    - cron: '30 12 * * 1-5'
+    # 收盘后记账:21:45 UTC
+    - cron: '45 21 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'signals | track | snapshot'
+        required: false
+        default: 'signals'
+
+concurrency:
+  group: swing-pipeline
+  cancel-in-progress: false
+
+jobs:
+  swing:
+    name: Social attention → swing signals
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: write # keepalive
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      ADANOS_API_KEY: ${{ secrets.ADANOS_API_KEY }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r scripts/requirements.txt
+      - name: Run
+        run: |
+          MODE="${{ github.event.inputs.mode }}"
+          if [ -z "$MODE" ]; then
+            if [ "${{ github.event.schedule }}" = "45 21 * * 1-5" ]; then MODE=track; else MODE=signals; fi
+          fi
+          python -m scripts.swing.run "$MODE"
+      - uses: liskin/gh-workflow-keepalive@v1
+        if: always()

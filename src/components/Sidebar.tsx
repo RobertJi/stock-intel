@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Briefcase, CalendarClock, Crosshair, Landmark, Radar, Settings } from "lucide-react";
+import { Briefcase, CalendarClock, Crosshair, Landmark, Radar, Settings, Zap } from "lucide-react";
 import { getPipelineHealth, getThemeNav, type PipelineHealth, type ThemeNavItem } from "@/lib/db";
 import { fmtAgo, freshnessLevel } from "@/lib/utils";
 import { themeAnchor } from "@/lib/anchors";
@@ -63,6 +63,16 @@ export async function Sidebar() {
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pb-2">
         <Link
           href="/"
+          className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+        >
+          <Zap className="size-4 text-faint transition-colors group-hover:text-accent" />
+          <span className="flex-1">波段机会</span>
+          <span className="font-mono text-[11px] uppercase tracking-widest text-faint">
+            Swing
+          </span>
+        </Link>
+        <Link
+          href="/value"
           className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
         >
           <Landmark className="size-4 text-faint transition-colors group-hover:text-accent" />

@@ -58,7 +58,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
   if (!c.supported || !c.analysis) {
     return (
       <div className="w-full">
-        <Link href="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/value" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-3.5" /> 组合与观察池
         </Link>
         <h1 className="font-display text-3xl font-semibold">{c.ticker}</h1>
@@ -77,7 +77,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ticker
 
   return (
     <div className="w-full">
-      <Link href="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+      <Link href="/value" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-3.5" /> 组合与观察池
       </Link>
 
