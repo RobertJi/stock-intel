@@ -22,9 +22,7 @@ def apewisdom(max_pages: int = 8) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     page = 1
     while page <= max_pages:
-        r = requests.get(f"https://apewisdom.io/api/v1.0/filter/all-stocks/page/{page}", headers=UA, timeout=30)
-        r.raise_for_status()
-        d = r.json()
+        d = _get_json(f"https://apewisdom.io/api/v1.0/filter/all-stocks/page/{page}")
         for x in d.get("results", []):
             out.append(
                 {
@@ -42,6 +40,19 @@ def apewisdom(max_pages: int = 8) -> list[dict[str, Any]]:
         page += 1
         time.sleep(0.5)
     return out
+
+
+def _get_json(url: str, tries: int = 4) -> Any:
+    """偶发的连接重置(GitHub Actions 出口)重试几次。"""
+    for i in range(tries):
+        try:
+            r = requests.get(url, headers=UA, timeout=30)
+            r.raise_for_status()
+            return r.json()
+        except (requests.ConnectionError, requests.Timeout, requests.HTTPError):
+            if i == tries - 1:
+                raise
+            time.sleep(3 * (i + 1))
 
 
 def adanos_enabled() -> bool:
