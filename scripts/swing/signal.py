@@ -99,7 +99,7 @@ def classify(ticker: str, att: dict[str, Any], mkt: dict[str, Any] | None, x_att
         reasons.append(f"X 上同步放大 {x_att['accel']:.1f} 倍")
 
     if mkt["ret1"] <= p["rebound_ret1"] and mkt["dollar_vol20"] >= p["min_dollar_vol"]:
-        reasons.append(f"当日下跌 {mkt['ret1']*100:.1f}%")
+        reasons.append(f"当日下跌 {abs(mkt['ret1'])*100:.1f}%")
         if mkt["ret20"] <= -0.2:
             reasons.append(f"20 日累计 {mkt['ret20']*100:.0f}%")
         # 排序:跌得越多、讨论越多、之前跌得越深,回测里反弹越强
