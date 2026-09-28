@@ -56,6 +56,12 @@ def snapshot(dry_run: bool) -> dict[str, Any]:
                                  "extra": {"name": x.get("company_name"), "trend": x.get("trend"), "trend_history": x.get("trend_history")}})
             except Exception as e:  # noqa: BLE001
                 print(f"  adanos {src} trending failed: {e}")
+    # PostgREST 批量写入要求每行的键完全一致;同一来源同一代码只留一条
+    keys = ("source", "ticker", "captured_at", "mentions", "mentions_prev", "buzz", "sentiment", "rank", "rank_prev", "extra")
+    uniq: dict[tuple[str, str], dict[str, Any]] = {}
+    for r in rows:
+        uniq.setdefault((r["source"], r["ticker"]), {k: r.get(k) for k in keys} | {"extra": r.get("extra") or {}})
+    rows = list(uniq.values())
     if not dry_run and rows:
         for i in range(0, len(rows), 500):
             db.insert("attention_snapshots", rows[i:i + 500], upsert_on="source,ticker,captured_at")
@@ -172,6 +178,7 @@ def signals(dry_run: bool) -> None:
     hot_explained = 0
     for s in found:
         s["risk_flags"] = risk.check(s["ticker"], s["market"]["close"]) if s["kind"] == "rebound" else []
+        s["why"] = None
         if s["kind"] == "rebound" or hot_explained < 10:
             s["why"] = explain(s)
             hot_explained += s["kind"] == "hot"

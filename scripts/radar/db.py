@@ -43,7 +43,8 @@ def insert(table: str, rows: list[dict[str, Any]], upsert_on: str | None = None)
         prefer += ",resolution=ignore-duplicates"
         url += f"?on_conflict={upsert_on}"
     r = requests.post(url, headers=_headers(prefer), data=json.dumps(rows), timeout=30)
-    r.raise_for_status()
+    if r.status_code >= 400:
+        raise requests.HTTPError(f"{r.status_code} insert {table}: {r.text[:300]}", response=r)
     return r.json() if r.text else []
 
 
