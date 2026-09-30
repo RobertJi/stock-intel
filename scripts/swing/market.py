@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import statistics as st
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from functools import lru_cache
 from typing import Any
 
@@ -34,6 +35,10 @@ def daily(ticker: str, rng: str = "6mo") -> tuple[tuple[str, float, float, float
             continue
         d = datetime.fromtimestamp(ts + tz_off, tz=timezone.utc).date().isoformat()
         rows.append((d, float(o), float(h), float(lo), float(c), float(v or 0)))
+    # 盘中运行时 Yahoo 会把当天未收盘的 K 线也返回,丢掉,只用完整交易日
+    now_et = datetime.now(ZoneInfo("America/New_York"))
+    if rows and rows[-1][0] == now_et.date().isoformat() and (now_et.hour, now_et.minute) < (16, 15):
+        rows.pop()
     return tuple(rows)
 
 

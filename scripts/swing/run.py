@@ -112,7 +112,9 @@ def build_signal(ticker: str, name: str, spy: tuple) -> dict[str, Any] | None:
         return None
     if att.get("trading_share") is not None and att["trading_share"] < signal.PARAMS["trading_share_min"]:
         return None
-    mkt = market.features(ticker.replace(".", "-"), spy)
+    # 与回测同口径:D 日(UTC)的讨论量配 D 日及以前的最后一个收盘
+    rows = [r for r in market.daily(ticker.replace(".", "-")) if r[0] <= att["date"]]
+    mkt = market.features_from_rows(rows, [r for r in spy if r[0] <= att["date"]])
     res = signal.classify(ticker, att, mkt, None)
     if not res:
         return None
@@ -156,7 +158,37 @@ def explain(sig: dict[str, Any]) -> str | None:
         return None
 
 
+def _mention_day() -> str:
+    return (_now() - timedelta(days=1)).date().isoformat()
+
+
+def _already_ran(day: str) -> bool:
+    return bool(db.get("attention_snapshots", f"select=id&source=eq.swing_run&ticker=eq._&captured_at=eq.{day}T00:00:00Z&limit=1"))
+
+
+def _mark_ran(day: str, info: dict[str, Any]) -> None:
+    db.insert("attention_snapshots", [{"source": "swing_run", "ticker": "_", "captured_at": f"{day}T00:00:00Z", "mentions": None,
+                                       "mentions_prev": None, "buzz": None, "sentiment": None, "rank": None, "rank_prev": None,
+                                       "extra": info}], upsert_on="source,ticker,captured_at")
+
+
+def entry_day(as_of: str) -> str:
+    """as_of 之后的下一个工作日(不含美股节假日,够用来判断是否已错过开盘)。"""
+    d = datetime.fromisoformat(as_of).date() + timedelta(days=1)
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d.isoformat()
+
+
+def missed_open(as_of: str) -> bool:
+    return _now() >= datetime.fromisoformat(entry_day(as_of) + "T13:30:00+00:00")
+
+
 def signals(dry_run: bool) -> None:
+    day = _mention_day()
+    if not dry_run and _already_ran(day):
+        print(f"signals: mention day {day} already processed, skip")
+        return
     snap = snapshot(dry_run)
     if not sources.adanos_enabled():
         print("signals: ADANOS_API_KEY 未配置，只存了 ApeWisdom 快照")
@@ -190,6 +222,7 @@ def signals(dry_run: bool) -> None:
     if found:
         db.insert("swing_signals", found, upsert_on="ticker,as_of")
     deliver()
+    _mark_ran(day, {"signals": len(found), "rebound": n_reb, "adanos_remaining": sources.quota["remaining"], "finished_at": _ts(_now())})
 
 
 # ---------------------------------------------------------------------------
@@ -243,7 +276,10 @@ def _fmt_rebound(s: dict[str, Any]) -> str:
     lines = [f"🔄 恐慌反弹 {s['ticker']} {s.get('name') or ''}", "；".join(reasons)]
     if s.get("why"):
         lines.append(f"为什么热：{s['why']}")
-    lines.append(f"计划：{p['entry']}买入，持有到{p['exit']}；跌破 {p['stop']} 止损（−{p['risk_pct']*100:.0f}%，防极端情况）")
+    ed = entry_day(s["as_of"])
+    lines.append(f"计划：{ed}（美东）开盘买入，持有到{p['exit']}；跌破 {p['stop']} 止损（−{p['risk_pct']*100:.0f}%，防极端情况）")
+    if missed_open(s["as_of"]):
+        lines.append("⏰ 这条信号出得晚了，入场那天已经开盘，只做纸面记录。")
     if risk_hi:
         lines.append("⚠️ " + "、".join(risk_hi) + "（这种情况建议跳过）")
     lines.append("回测：同类信号 5 天后平均跑赢大盘约 3%，胜率约 65%，但收益集中在少数大跌日。纸面跟踪中。")
