@@ -2,10 +2,12 @@ name: Swing Pipeline
 
 on:
   schedule:
-    # 美股开盘前出信号:12:30 UTC(美东夏令 8:30 / 冬令 7:30,北京 20:30)
-    - cron: '30 12 * * 1-5'
-    # 收盘后记账:21:45 UTC
-    - cron: '45 21 * * 1-5'
+    # 出信号:UTC 零点后前一天的讨论量就完整了,要赶在美股开盘(13:30 UTC)前出。
+    # GitHub 定时任务常延迟数小时,所以一天排 4 次,脚本按「讨论日」去重,只有第一次真正执行。
+    - cron: '7 1,4,7,10 * * *'
+    # 收盘后记账(同样可能延迟,记账可重复执行)
+    - cron: '17 22 * * 1-5'
+    - cron: '17 3 * * 2-6'
   workflow_dispatch:
     inputs:
       mode:
@@ -44,7 +46,10 @@ jobs:
         run: |
           MODE="${{ github.event.inputs.mode }}"
           if [ -z "$MODE" ]; then
-            if [ "${{ github.event.schedule }}" = "45 21 * * 1-5" ]; then MODE=track; else MODE=signals; fi
+            case "${{ github.event.schedule }}" in
+              "17 22 * * 1-5"|"17 3 * * 2-6") MODE=track ;;
+              *) MODE=signals ;;
+            esac
           fi
           python -m scripts.swing.run "$MODE"
       - uses: liskin/gh-workflow-keepalive@v1
