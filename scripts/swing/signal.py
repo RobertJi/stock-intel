@@ -5,6 +5,9 @@
 - 热度放大 + 当日大跌 ≥ 5% 的流动性好的股票,之后 5 个交易日平均跑赢大盘约 3.5%,胜率约 65%
   (7、8、9 三个月分别都为正;没有热度放大的大跌股同期只有 +1%) → 「恐慌反弹」
 - 热度放大本身、或热度放大 + 放量突破,没有超额收益
+v5.1(2026-10-13 复测,见 docs/swing-backtest-2026-09.md):
+- 之前 20 日已涨 ≥20% 再大跌的,T+5 平均跑输 3–6%(7–10 月、1–6 月纯行情、带热度子集三组一致)→ 排除
+- 注意:同一天里「有热度」和「没热度」的大跌股差距不显著,反弹收益大部分来自集体踩踏日的整体反弹和高贝塔
 阈值集中在 PARAMS。
 """
 from __future__ import annotations
@@ -12,7 +15,7 @@ from __future__ import annotations
 import statistics as st
 from typing import Any
 
-MODEL_VERSION = "v5.0"
+MODEL_VERSION = "v5.1"
 
 PARAMS: dict[str, float] = {
     "min_mentions": 10,        # 信号日 Reddit 提及下限
@@ -22,6 +25,7 @@ PARAMS: dict[str, float] = {
     "min_price": 5.0,
     "min_dollar_vol": 100e6,   # 20 日平均成交额;回测里 1 亿美元以下的反弹信号没有超额
     "rebound_ret1": -0.05,     # 恐慌反弹:信号日跌幅
+    "rebound_max_ret20": 0.20, # 之前 20 日已涨这么多再大跌 = 行情结束,不是恐慌(v5.1)
     "hot_ret1": 0.05,          # 过热:信号日涨幅
     "hot_ret5": 0.15,          # 过热:5 日涨幅
     "hold_days": 5,            # 回测里 5 天最好(3 天 +1.1%,5 天 +3.6%,10 天 +3.0%)
@@ -99,6 +103,8 @@ def classify(ticker: str, att: dict[str, Any], mkt: dict[str, Any] | None, x_att
         reasons.append(f"X 上同步放大 {x_att['accel']:.1f} 倍")
 
     if mkt["ret1"] <= p["rebound_ret1"] and mkt["dollar_vol20"] >= p["min_dollar_vol"]:
+        if mkt["ret20"] >= p["rebound_max_ret20"]:
+            return None
         reasons.append(f"当日下跌 {abs(mkt['ret1'])*100:.1f}%")
         if mkt["ret20"] <= -0.2:
             reasons.append(f"20 日累计 {mkt['ret20']*100:.0f}%")
